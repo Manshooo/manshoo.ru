@@ -1,18 +1,67 @@
-# Прод-композиция (VPS). Сейчас — только uptime (Phase 1).
-# Phase 2 добавит caddy (или существующий nginx — вопрос №1 в docs/00-vision.md),
-# frontend, api, postgres. Схема — docs/01-architecture.md.
+# Прод-композиция (VPS, каталог /var/www/manshoo).
+# Схема: nginx (системный) → 127.0.0.1:3000 frontend, 127.0.0.1:8000 api;
+# uptime наружу не публикуется. См. docs/01-architecture.md.
 #
-# Запуск:      docker compose -f docker-compose.prod.yml up -d
-# Обновление:  docker compose -f docker-compose.prod.yml pull && \
-#              docker compose -f docker-compose.prod.yml up -d
+# Файлы в /var/www/manshoo кладёт deploy-job (кроме api/.env и uptime/.env —
+# их создаёт deploy/bootstrap-vps.sh, секреты не в git).
 name: manshoo
 
 services:
+  frontend:
+    image: ghcr.io/manshooo/manshoo.ru-frontend:latest
+    restart: unless-stopped
+    environment:
+      PORT: "3000"
+      ORIGIN: https://manshoo.ru
+      API_URL: http://api:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      api:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  api:
+    image: ghcr.io/manshooo/manshoo.ru-api:latest
+    restart: unless-stopped
+    env_file:
+      - ./api/.env
+    volumes:
+      - ./media:/app/media
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    # POSTGRES_* берутся из того же env-файла, что у api (лишние переменные образ игнорирует)
+    env_file:
+      - ./api/.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U manshoo -d manshoo"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
   uptime:
     image: ghcr.io/manshooo/manshoo.ru-uptime:latest
     restart: unless-stopped
     env_file:
-      # TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID (см. uptime/.env.example)
+      # TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID (создаёт bootstrap, заполняет владелец)
       - path: ./uptime/.env
         required: false
     volumes:
@@ -28,4 +77,5 @@ services:
       retries: 3
 
 volumes:
+  postgres_data:
   uptime_data:

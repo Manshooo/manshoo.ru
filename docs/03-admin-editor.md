@@ -1,6 +1,8 @@
 # Админка: интерфейс «добавить проект»
 
-Собственный UI внутри frontend-приложения (маршруты `/admin/*`), работает с API из [02-data-model.md](02-data-model.md). Это Phase 3 роадмапа; до неё контент вносится через стандартную Django-админку (`/django-admin`) — она бесплатно есть с первого дня и остаётся страховкой навсегда.
+Собственный UI внутри frontend-приложения (маршруты `/admin/*`), работает с API из [02-data-model.md](02-data-model.md). Это Phase 3 роадмапа; до неё контент вносится через стандартную Django-админку (`api.manshoo.ru/django-admin/`) — она бесплатно есть с первого дня и остаётся страховкой навсегда.
+
+Замечание для Phase 3: админка живёт на manshoo.ru, API — на api.manshoo.ru. Это **same-site** (один registrable domain), поэтому сессионные куки Django работают без SameSite-танцев; понадобится только CORS (`Access-Control-Allow-Origin: https://manshoo.ru` + credentials) и `CSRF_TRUSTED_ORIGINS` (уже настроен).
 
 ## Маршруты
 

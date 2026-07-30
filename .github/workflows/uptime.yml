@@ -3,9 +3,9 @@ name: uptime
 on:
   push:
     branches: [main]
-    paths: ["uptime/**", ".github/workflows/uptime.yml"]
+    paths: ["uptime/**", ".github/workflows/uptime.yml", "docker-compose.prod.yml"]
   pull_request:
-    paths: ["uptime/**", ".github/workflows/uptime.yml"]
+    paths: ["uptime/**", ".github/workflows/uptime.yml", "docker-compose.prod.yml"]
 
 defaults:
   run:
@@ -59,3 +59,35 @@ jobs:
           tags: |
             ghcr.io/manshooo/manshoo.ru-uptime:latest
             ghcr.io/manshooo/manshoo.ru-uptime:${{ github.sha }}
+
+  deploy:
+    name: deploy to VPS
+    needs: image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, manshoo]
+    concurrency:
+      group: deploy-uptime
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: read
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v7
+      - name: Sync deploy files
+        run: |
+          install -m 644 docker-compose.prod.yml /var/www/manshoo/docker-compose.prod.yml
+          install -m 644 uptime/config.yaml /var/www/manshoo/uptime/config.yaml
+      - name: ghcr login
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Pull & up
+        run: |
+          cd /var/www/manshoo
+          docker compose -f docker-compose.prod.yml pull uptime
+          docker compose -f docker-compose.prod.yml up -d uptime
+      - name: Health
+        run: curl -fsS --retry 10 --retry-delay 3 --retry-all-errors http://127.0.0.1:8080/healthz
+      - name: Prune dangling images
+        run: docker image prune -f

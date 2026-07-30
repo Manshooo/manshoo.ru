@@ -10,7 +10,7 @@
 
 ## Статус
 
-🚧 Phase 0 (фундамент) готова: dev-окружение, каркасы сервисов, CI. Дальше по плану — uptime-чекер. Вся проектная документация — в [docs/](docs/):
+🚧 Phase 0–2 по коду готовы: uptime-чекер мониторит проекты, сайт (главная + портфолио + SEO-база) написан и проверен. Деплой — одноразовый `sudo bash deploy/bootstrap-vps.sh` на VPS, дальше всё едет через GitHub Actions (self-hosted runner). Документация — в [docs/](docs/):
 
 - [docs/README.md](docs/README.md) — карта документации
 - [docs/06-roadmap.md](docs/06-roadmap.md) — текущий план работ по фазам
@@ -45,7 +45,9 @@ cd frontend && npm run lint && npm run check && npm test
 docker compose run --rm uptime sh -c 'test -z "$(gofmt -l .)" && go vet ./... && go test ./...'
 ```
 
-Прод: `docker-compose.prod.yml` (заполняется с Phase 1), образы собираются в GitHub Actions → ghcr.io.
+## Деплой
+
+Push в main → workflow сервиса: lint/test → образ в ghcr.io → deploy-джоба на self-hosted runner'е VPS (`docker compose pull/up` в `/var/www/manshoo`). Схема и трейд-оффы — [ADR-006](docs/decisions/ADR-006-deploy-selfhosted-runner.md); первичная настройка сервера — [deploy/bootstrap-vps.sh](deploy/bootstrap-vps.sh).
 
 ## Лицензия
 

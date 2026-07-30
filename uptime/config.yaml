@@ -10,8 +10,7 @@ monitors:
     name: azzb.ru
     url: https://azzb.ru
     expect_status: 200
-  # manshoo.ru добавится после деплоя сайта (Phase 2):
-  # - slug: manshoo
-  #   name: manshoo.ru
-  #   url: https://manshoo.ru
-  #   expect_status: 200
+  - slug: manshoo
+    name: manshoo.ru
+    url: https://manshoo.ru
+    expect_status: 200

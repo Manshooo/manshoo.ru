@@ -27,24 +27,26 @@ Uptime идёт раньше сайта осознанно: он полезен 
 - [x] Telegram-уведомления на переходы up/down (без токена — фолбэк в лог).
 - [x] JSON API `/api/status`, `/api/monitors/{slug}` + `/healthz`; тесты всех пакетов.
 - [x] Multi-stage Dockerfile (CGO-free, distroless, 22 МБ, флаг `-healthcheck`); CI пушит образ: `ghcr.io/manshooo/manshoo.ru-uptime`.
-- [ ] Деплой на VPS (`docker-compose.prod.yml` готов, пока только uptime) — **блокер: открытый вопрос №1** (что за VPS, есть ли там nginx). Для запуска нужны: доступ к серверу, `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` в `uptime/.env`.
+- [ ] Деплой на VPS — вопросы закрыты, обвязка готова: runner `manshoo-vps` зарегистрирован, deploy-джобы во всех workflow, компоуз заполнен. **Одно действие владельца: запустить [deploy/bootstrap-vps.sh](../deploy/bootstrap-vps.sh) под sudo** — дальше очередь деплоев поедет сама. Telegram-env опционален (без него алерты в лог), заполняется в `/var/www/manshoo/uptime/.env`.
 
 **Готово, когда:** остановка azzb.ru (или тестового монитора) приводит к алерту в Telegram в течение ~3 минут (переходы проверены тестами и живым контейнером; реальный Telegram — на деплое); сервис переживает рестарт без ложных алертов ✅ (состояние читается из SQLite — проверено рестартом контейнера).
 
 Заметки по факту: роутер — stdlib вместо chi (Go 1.22+ умеет методы и `{slug}`, см. [05-uptime.md](05-uptime.md)); golangci-lint строже `go vet` — errcheck требует явного `_ =` даже на отложенных Close.
 
-## Phase 2 — Сайт MVP (~5–8 вечеров)
+## Phase 2 — Сайт MVP (~5–8 вечеров) — 🔶 код готов 2026-07-30, деплой ждёт bootstrap
 
 Цель: manshoo.ru в проде — главная + портфолио, контент через Django-админку. Спеки: [02-data-model.md](02-data-model.md), [04-seo.md](04-seo.md).
 
-- [ ] api: проект Django + Ninja; модели Profile/Project + миграции; публичные GET-endpoints; Django-админка настроена (list_display, prepopulated slug); healthz.
-- [ ] frontend: SvelteKit-скелет; главная (Profile + сетка проектов) и `/projects/[slug]` с SSR-фетчами к api по внутренней сети; Markdown-рендер; минималистичная вёрстка (+ тёмная тема через `prefers-color-scheme` — дёшево сейчас, дорого потом).
-- [ ] Типы из OpenAPI-схемы Ninja (`openapi-typescript`) — общий контракт.
-- [ ] SEO-база: title/description/canonical, sitemap.xml, robots.txt, OG-теги, 404 (чеклист «База» в [04-seo.md](04-seo.md)).
-- [ ] Прод: Caddy (или существующий nginx), TLS, деплой api+frontend+postgres; бэкап-крон pg_dump + media, один раз проверить восстановление.
-- [ ] Наполнить: профиль + 2–3 реальных проекта (в т.ч. azzb.ru) через Django-админку.
-- [ ] **Добавить манитор manshoo.ru в uptime** (правка config.yaml).
-- [ ] Search Console + Яндекс.Вебмастер: подтвердить, отправить sitemap.
+- [x] api: приложение `content` — модели Profile/Project + миграции + сид (профиль, кейс manshoo-ru, azzb-ru черновиком); публичные GET-endpoints (Ninja); Django-админка настроена (fieldsets, list_editable, prepopulated slug); whitenoise для статики.
+- [x] frontend: главная (Profile + сетка проектов) и `/projects/[slug]` с SSR-фетчами к api по внутренней сети; Markdown (marked); минимализм + тёмная тема (`prefers-color-scheme`); тесты markdown/format.
+- [x] Типы контракта: вручную в `src/lib/types.ts` (осознанное упрощение — генерация из OpenAPI в Phase 3, см. [02-data-model.md](02-data-model.md)).
+- [x] SEO-база: title/description/canonical, OG-теги (og:image — в Phase 4 с генератором), sitemap.xml с lastmod, robots.txt, честные 404, favicon.
+- [x] Прод-обвязка: системный nginx (конфиги в bootstrap), TLS certbot, compose api+frontend+postgres, deploy-джобы.
+- [ ] **Деплой**: ждёт `sudo bash deploy/bootstrap-vps.sh` от владельца (см. Phase 1) — после него очередь джобов доедет сама.
+- [ ] Бэкап-крон: pg_dump + media + sqlite uptime, разово проверить восстановление (после первого деплоя).
+- [ ] Наполнить контент: отредактировать профиль, дописать и опубликовать azzb.ru через `api.manshoo.ru/django-admin/` (пароль — в `/var/www/manshoo/api/.env`).
+- [x] Монитор manshoo.ru в uptime (включён в config.yaml, деплоится той же волной).
+- [ ] Search Console + Яндекс.Вебмастер: подтвердить домен, отправить sitemap (действие владельца — нужны его аккаунты).
 
 **Готово, когда:** manshoo.ru открывается, контент виден с выключенным JS, Lighthouse SEO ≥ 95, uptime следит за обоими доменами.
 

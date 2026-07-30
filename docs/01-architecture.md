@@ -2,77 +2,78 @@
 
 Обзорный документ. Детали решений и альтернативы — в [decisions/](decisions/).
 
-## Схема
+## Схема (прод)
 
 ```mermaid
 flowchart LR
-    U[Браузер] --> C[Caddy :80/:443]
-    C -->|manshoo.ru/*| F["frontend
+    U[Браузер] --> N["nginx (системный)
+    :80/:443, TLS certbot"]
+    N -->|manshoo.ru| F["frontend
     SvelteKit SSR :3000"]
-    C -->|/api/*, /django-admin/*, /media/*| A["api
+    N -->|api.manshoo.ru| A["api
     Django + Ninja :8000"]
-    F -->|SSR-фетчи, внутр. сеть| A
-    F -->|статусы проектов, внутр. сеть| UP["uptime
+    N -->|api.manshoo.ru/media| M[(bind-mount media)]
+    F -->|SSR-фетчи, docker-сеть| A
+    F -->|статусы, docker-сеть| UP["uptime
     Go :8080"]
     A --> P[(PostgreSQL)]
+    A --> M
     UP --> S[(SQLite, volume)]
     UP -->|HTTP-проверки| EXT[azzb.ru, manshoo.ru]
     UP -->|алерты| TG[Telegram Bot API]
 ```
 
+## Прод-окружение (реальность VPS)
+
+Один сервер на оба проекта: Debian 12, 1 CPU, **1 ГБ RAM** (+2 ГБ swap из bootstrap), 15 ГБ диска, IP 62.109.26.178. Проекты изолированы пользователями: azzb.ru — `azzb_user` (nginx + uWSGI, вне нашего скоупа), manshoo.ru — `manshoo_user`, каталог `/var/www/manshoo`. Системный nginx владеет 80/443 и маршрутизирует оба проекта; наши контейнеры публикуют порты только на 127.0.0.1. Из-за 1 ГБ RAM: gunicorn с 2 воркерами, без лишних сервисов, swap обязателен.
+
 ## Сервисы
 
 | Сервис | Стек | Ответственность | Наружу |
 |---|---|---|---|
-| `frontend` | SvelteKit (Svelte 5, TS), adapter-node | Публичные страницы (SSR/prerender), админка `/admin` (CSR), sitemap, robots | через Caddy |
-| `api` | Python, Django + Django Ninja | REST API (профиль, проекты, auth, upload), Django-админка как запасной редактор | только `/api`, `/django-admin`, `/media` |
-| `uptime` | Go (stdlib + chi), SQLite | HTTP-проверки сайтов, история, Telegram-алерты, JSON API статусов | **нет** (только внутренняя docker-сеть) |
+| `frontend` | SvelteKit (Svelte 5, TS), adapter-node | Публичные страницы (SSR), админка `/admin` (CSR, Phase 3), sitemap, robots | manshoo.ru через nginx |
+| `api` | Django 5.2 + Ninja, whitenoise | REST API, Django-админка (запасной редактор), медиа | api.manshoo.ru через nginx |
+| `uptime` | Go, SQLite | Проверки сайтов, Telegram-алерты, JSON API статусов | **нет** (только docker-сеть/localhost) |
 | `postgres` | PostgreSQL 17 | Данные api | нет |
-| `caddy` | Caddy 2 | TLS (auto Let's Encrypt), маршрутизация, отдача `/media` с кэшем | 80/443 |
 
-Ключевое свойство: `uptime` не зависит от сайта и не публикуется наружу. Алерты идут напрямую в Telegram, поэтому канал оповещения работает, даже если веб лежит. Статусы на сайте frontend забирает по внутренней сети (`http://uptime:8080`).
+Статику Django (админка) отдаёт **whitenoise** из образа (collectstatic на этапе сборки) — nginx не лазит в контейнер. Медиа-загрузки — bind-mount `/var/www/manshoo/media` ↔ `/app/media`, наружу их отдаёт nginx (`api.manshoo.ru/media/`).
 
-Известное ограничение: чекер на том же VPS, что и manshoo.ru, не заметит падение всего VPS. Компенсация — heartbeat наружу (например, healthchecks.io пингуется самим чекером; пропал пинг — пришёл алерт). Позже чекер можно унести на отдельный бесплатный хост. Подробнее — [05-uptime.md](05-uptime.md).
+## Маршрутизация
 
-## Маршрутизация (prod)
-
-| Путь | Куда |
+| Адрес | Куда |
 |---|---|
-| `manshoo.ru/*` | frontend (SSR) |
-| `manshoo.ru/api/*` | api |
-| `manshoo.ru/django-admin/*` | api (запасная админка; закрыть доп. basic auth на Caddy) |
-| `manshoo.ru/media/*` | volume api, отдаёт Caddy с `Cache-Control` |
-| `manshoo.ru/admin/*` | frontend (своя админка, CSR, `noindex`) |
+| `manshoo.ru`, `www.manshoo.ru` | frontend (SSR) — nginx → 127.0.0.1:3000 |
+| `manshoo.ru/admin` | своя админка (Phase 3), CSR + noindex |
+| `api.manshoo.ru` | api — nginx → 127.0.0.1:8000 (`/api/*`, `/django-admin/`, OpenAPI-дока `/api/docs`) |
+| `api.manshoo.ru/media/*` | nginx напрямую из `/var/www/manshoo/media` |
+| `api.manshoo.ru/robots.txt` | `Disallow: /` — API не индексируем |
 
-## Окружения
+manshoo.ru и api.manshoo.ru — один registrable domain, т.е. **same-site**: сессионные куки Django будут работать из админки на manshoo.ru без танцев (Phase 3 добавит только CORS-заголовки).
 
-**dev** — `docker-compose.yml`: hot-reload у всех (`vite dev`, `runserver`, `air` для Go), порты наружу, один `.env` на сервис (`.env.example` в git, сами `.env` — нет).
+## Деплой (ADR-006)
 
-**prod** — `docker-compose.prod.yml`: образы из ghcr.io, `restart: unless-stopped`, healthchecks у каждого сервиса (`/healthz`), volumes: `postgres_data`, `media`, `uptime_data`, `caddy_data`.
+- **Self-hosted runner** (`manshoo-vps`, label `manshoo`) — systemd-сервис под `manshoo_user`.
+- Каждый push в main: workflow сервиса (paths-фильтр) → lint/test на облачном раннере → build+push образа в ghcr → **deploy-job на self-hosted**: sync `docker-compose.prod.yml` (+конфиги) в `/var/www/manshoo` → `docker compose pull/up` → health-check. Для api дополнительно: `migrate` и идемпотентный `createsuperuser`.
+- Секреты живут только на VPS: `/var/www/manshoo/api/.env` (генерирует bootstrap), `/var/www/manshoo/uptime/.env` (Telegram, заполняет владелец). В GitHub Secrets ничего класть не нужно.
+- **Одноразовый bootstrap** — [deploy/bootstrap-vps.sh](../deploy/bootstrap-vps.sh) под sudo: swap, docker, секреты, runner-сервис, nginx-конфиги, certbot. Идемпотентен.
 
-Вариант «на VPS уже есть nginx (azzb.ru)»: убираем caddy из compose, публикуем frontend/api на локальные порты и добавляем server-блок в существующий nginx. Решить при первом деплое (открытый вопрос №1 в [00-vision.md](00-vision.md)).
+## Dev-окружение
 
-## CI/CD
-
-Три workflow (файлы уже заведены в `.github/workflows/`), каждый с `paths:`-фильтром своего каталога:
-
-1. **PR / push в main**: lint + тесты (frontend: `svelte-check` + eslint + vitest; api: ruff + mypy + pytest; uptime: `go vet` + golangci-lint + `go test`).
-2. **push в main**: build multi-stage образа → push в `ghcr.io/manshooo/manshoo.ru-<svc>:latest` + `:sha`.
-3. **deploy job**: по ssh на VPS → `docker compose pull <svc> && docker compose up -d <svc>`. Секреты — в GitHub Secrets.
+`docker-compose.yml`: hot-reload у всех (vite/runserver/air, поллинг файлов — inotify не проходит через volume-mount на Windows), postgres с volume, порты 5173/8000/8080/5432. `docker compose up --build` — единственная команда.
 
 ## Безопасность
 
-- Auth админки: сессии Django (HttpOnly cookie, `SameSite=Lax`) + CSRF; один суперюзер; rate limit на login.
-- `/django-admin` дополнительно за basic auth на прокси.
-- Секреты только через env; `DEBUG=0` в prod; `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS` заданы явно.
-- Загрузка изображений: лимит размера, проверка content-type, имена файлов нормализуются.
+- Сессии Django: HttpOnly, `SameSite=Lax`, `Secure`; CSRF со списком `CSRF_TRUSTED_ORIGINS`; `SECURE_PROXY_SSL_HEADER` — доверяем `X-Forwarded-Proto` от nginx.
+- Контейнеры не-root (appuser/nonroot), порты только на localhost, uptime наружу не публикуется.
+- Runner = доступ к docker на VPS: чужие PR на self-hosted не выполняются (дефолт GitHub для форков — только с апрувом).
+- Загрузки: лимит 10m на nginx, Pillow-пересохранение (Phase 3).
 
 ## Бэкапы
 
-- Postgres: `pg_dump` ночью по cron на VPS, хранить 14 копий, выгрузка в объектное хранилище/другую машину — позже.
-- `media` и SQLite uptime: rsync/copy тем же кроном.
-- Проверка восстановления — один раз при настройке (см. roadmap Phase 2).
+- Postgres: `pg_dump` ночным cron'ом на VPS (настроить в Phase 2-деплое, см. roadmap), хранить 14 копий.
+- `/var/www/manshoo/media` и SQLite uptime — копия тем же cron'ом.
+- Разово проверить восстановление.
 
-## Версии (зафиксировать при старте фазы)
+## Версии
 
-Python 3.13, Django 5.2 LTS, Node 22 LTS, SvelteKit 2 / Svelte 5, Go 1.26 (air требует ≥1.26), PostgreSQL 17. Обновления — Dependabot (настроен в Phase 0).
+Python 3.13, Django 5.2 LTS, Node 24 LTS, SvelteKit 2 / Svelte 5, Go 1.26, PostgreSQL 17, nginx системный (Debian), whitenoise, marked. Обновления — Dependabot.

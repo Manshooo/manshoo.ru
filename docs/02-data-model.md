@@ -49,7 +49,7 @@
 
 ## API (Django Ninja)
 
-Ninja даёт OpenAPI-схему из коробки → из неё генерируем TypeScript-типы для фронта (`openapi-typescript`), чтобы контракт был один.
+Ninja даёт OpenAPI-схему из коробки (`/api/docs`). В Phase 2 TS-типы написаны вручную (`frontend/src/lib/types.ts` — контракт из трёх интерфейсов, зеркалит `content/schemas.py`); генерацию через `openapi-typescript` включим в Phase 3, когда контракт вырастет админскими эндпоинтами.
 
 ### Публичное (без auth)
 

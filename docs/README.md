@@ -25,6 +25,7 @@
 | [ADR-003](decisions/ADR-003-rendering-ssr.md) | Рендеринг — **гибридный SSR** (публичные страницы SSR/prerender, админка CSR) |
 | [ADR-004](decisions/ADR-004-database-postgres.md) | БД сайта — **PostgreSQL**; у uptime — встроенный **SQLite** |
 | [ADR-005](decisions/ADR-005-uptime-go.md) | Uptime checker — **собственный сервис на Go** |
+| [ADR-006](decisions/ADR-006-deploy-selfhosted-runner.md) | Деплой — **self-hosted runner на VPS**, маршрутизация — **системный nginx** |
 
 ## Как работать с ADR
 

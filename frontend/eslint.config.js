@@ -15,6 +15,11 @@ export default ts.config(
 	{
 		languageOptions: {
 			globals: { ...globals.browser, ...globals.node }
+		},
+		rules: {
+			// Сайт живёт в корне домена, base path не используется —
+			// оборачивать каждый href в resolve() нет смысла.
+			'svelte/no-navigation-without-resolve': 'off'
 		}
 	},
 	{

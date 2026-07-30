@@ -27,7 +27,8 @@ Uptime идёт раньше сайта осознанно: он полезен 
 - [x] Telegram-уведомления на переходы up/down (без токена — фолбэк в лог).
 - [x] JSON API `/api/status`, `/api/monitors/{slug}` + `/healthz`; тесты всех пакетов.
 - [x] Multi-stage Dockerfile (CGO-free, distroless, 22 МБ, флаг `-healthcheck`); CI пушит образ: `ghcr.io/manshooo/manshoo.ru-uptime`.
-- [x] Деплой на VPS: bootstrap выполнен владельцем 2026-07-30, uptime в проде мониторит azzb.ru и manshoo.ru. Telegram-env ещё не заполнен → алерты пока в лог (`/var/www/manshoo/uptime/.env` + `docker compose ... up -d uptime`).
+- [x] Деплой на VPS: bootstrap выполнен владельцем 2026-07-30, uptime в проде мониторит azzb.ru и manshoo.ru.
+- [ ] Telegram-алерты: env заполнен, но `api.telegram.org` заблокирован с хостинга → нужен прокси (`TELEGRAM_API_BASE`, воркер в [deploy/telegram-proxy-worker.js](../deploy/telegram-proxy-worker.js)) и **перевыпуск токена** (старый утёк в логи из-за бага логирования — исправлен, см. [05-uptime.md](05-uptime.md)).
 
 **Готово, когда:** остановка azzb.ru (или тестового монитора) приводит к алерту в Telegram в течение ~3 минут (переходы проверены тестами и живым контейнером; реальный Telegram — на деплое); сервис переживает рестарт без ложных алертов ✅ (состояние читается из SQLite — проверено рестартом контейнера).
 

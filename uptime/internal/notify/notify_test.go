@@ -1,6 +1,7 @@
 package notify
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -57,8 +58,7 @@ func TestTelegramNotify(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	tg := NewTelegram("TOKEN123", "42", slog.New(slog.NewTextHandler(io.Discard, nil)))
-	tg.base = srv.URL
+	tg := NewTelegram("TOKEN123", "42", srv.URL, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	tg.Notify(context.Background(), event(scheduler.StatusDown, 0, "таймаут"))
 
 	if gotPath != "/botTOKEN123/sendMessage" {
@@ -70,5 +70,27 @@ func TestTelegramNotify(t *testing.T) {
 	text, _ := gotBody["text"].(string)
 	if !strings.Contains(text, "упал") {
 		t.Errorf("text = %q, нет слова «упал»", text)
+	}
+}
+
+func TestTelegramSendErrorDoesNotLeakToken(t *testing.T) {
+	// Регрессия: url.Error содержит URL с токеном — в лог он попадать не должен.
+	var buf bytes.Buffer
+	log := slog.New(slog.NewTextHandler(&buf, nil))
+
+	// Закрытый сервер: гарантированная ошибка соединения.
+	srv := httptest.NewServer(http.NotFoundHandler())
+	base := srv.URL
+	srv.Close()
+
+	tg := NewTelegram("SECRET-TOKEN-123", "42", base, log)
+	tg.Notify(context.Background(), event(scheduler.StatusDown, 0, ""))
+
+	out := buf.String()
+	if out == "" {
+		t.Fatal("ожидали запись об ошибке в логе")
+	}
+	if strings.Contains(out, "SECRET-TOKEN-123") {
+		t.Fatalf("токен утёк в лог: %s", out)
 	}
 }

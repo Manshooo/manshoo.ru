@@ -5,10 +5,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/Manshooo/manshoo.ru/uptime/internal/scheduler"
@@ -59,11 +62,14 @@ type Telegram struct {
 	log    *slog.Logger
 }
 
-func NewTelegram(token, chatID string, log *slog.Logger) *Telegram {
+// NewTelegram создаёт нотификатор. base — адрес Bot API: обычно
+// https://api.telegram.org, но с хостингов, где он заблокирован,
+// ходим через свой прокси (env TELEGRAM_API_BASE, см. docs/05-uptime.md).
+func NewTelegram(token, chatID, base string, log *slog.Logger) *Telegram {
 	return &Telegram{
 		token:  token,
 		chatID: chatID,
-		base:   "https://api.telegram.org",
+		base:   strings.TrimRight(base, "/"),
 		client: &http.Client{Timeout: 10 * time.Second},
 		log:    log,
 	}
@@ -90,7 +96,8 @@ func (t *Telegram) Notify(ctx context.Context, e scheduler.Event) {
 
 	resp, err := t.client.Do(req)
 	if err != nil {
-		t.log.Error("telegram: send", "err", err)
+		// ВАЖНО: не логируем err как есть — url.Error содержит URL с токеном бота
+		t.log.Error("telegram: send", "err", sanitizeSendErr(err))
 		return
 	}
 	defer func() { _ = resp.Body.Close() }()
@@ -98,6 +105,15 @@ func (t *Telegram) Notify(ctx context.Context, e scheduler.Event) {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
 		t.log.Error("telegram: api error", "status", resp.StatusCode, "body", string(body))
 	}
+}
+
+// sanitizeSendErr вынимает причину сбоя без URL запроса (в нём токен бота).
+func sanitizeSendErr(err error) string {
+	var ue *url.Error
+	if errors.As(err, &ue) {
+		return fmt.Sprintf("%s: %v", ue.Op, ue.Err)
+	}
+	return "request failed"
 }
 
 // Log — запасной нотификатор, когда Telegram не настроен.

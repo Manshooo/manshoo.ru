@@ -55,7 +55,8 @@ func run(log *slog.Logger, addr string) error {
 	var notifier scheduler.Notifier
 	token, chatID := os.Getenv("TELEGRAM_BOT_TOKEN"), os.Getenv("TELEGRAM_CHAT_ID")
 	if token != "" && chatID != "" {
-		notifier = notify.NewTelegram(token, chatID, log)
+		base := envOr("TELEGRAM_API_BASE", "https://api.telegram.org")
+		notifier = notify.NewTelegram(token, chatID, base, log)
 		log.Info("telegram notifications enabled")
 	} else {
 		notifier = notify.NewLog(log)

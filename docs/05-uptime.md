@@ -48,7 +48,7 @@ uptime/
   internal/api/             # chi-роутер: /api/status, /healthz
 ```
 
-Зависимости — минимум, идиоматичный стиль: stdlib `net/http` + `chi` (роутер), `modernc.org/sqlite` (без CGO → простой multi-stage build в scratch/distroless), YAML-парсер. Никаких ORM и фреймворков — цель в том числе учебная.
+Зависимости — минимум, идиоматичный стиль: stdlib `net/http` (роутер с Go 1.22 умеет методы и `{slug}`-паттерны — chi не понадобился), `modernc.org/sqlite` (без CGO → простой multi-stage build в scratch/distroless), YAML-парсер. Никаких ORM и фреймворков — цель в том числе учебная.
 
 Хранение: ретенция сырых проверок 90 дней (фоновая чистка), state переживает рестарт (читается из SQLite при старте — рестарт не порождает ложных алертов).
 

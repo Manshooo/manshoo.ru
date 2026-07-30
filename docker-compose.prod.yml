@@ -1,8 +1,31 @@
-# Прод-композиция. Заполняется по фазам роадмапа (docs/06-roadmap.md):
-#   Phase 1 — сервис uptime (первый деплой на VPS, образ из ghcr.io)
-#   Phase 2 — caddy (или существующий nginx — открытый вопрос №1 в docs/00-vision.md),
-#             frontend, api, postgres + volumes, healthchecks, бэкапы
-# Схема прода описана в docs/01-architecture.md.
+# Прод-композиция (VPS). Сейчас — только uptime (Phase 1).
+# Phase 2 добавит caddy (или существующий nginx — вопрос №1 в docs/00-vision.md),
+# frontend, api, postgres. Схема — docs/01-architecture.md.
 #
-# Запуск на VPS (когда появится содержимое):
-#   docker compose -f docker-compose.prod.yml up -d
+# Запуск:      docker compose -f docker-compose.prod.yml up -d
+# Обновление:  docker compose -f docker-compose.prod.yml pull && \
+#              docker compose -f docker-compose.prod.yml up -d
+name: manshoo
+
+services:
+  uptime:
+    image: ghcr.io/manshooo/manshoo.ru-uptime:latest
+    restart: unless-stopped
+    env_file:
+      # TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID (см. uptime/.env.example)
+      - path: ./uptime/.env
+        required: false
+    volumes:
+      - ./uptime/config.yaml:/config.yaml:ro
+      - uptime_data:/data
+    ports:
+      # только localhost: наружу uptime не публикуется (docs/01-architecture.md)
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD", "/uptime", "-healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  uptime_data:

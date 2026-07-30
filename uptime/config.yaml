@@ -1,0 +1,17 @@
+# Мониторы uptime-чекера. Telegram настраивается через env:
+# TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID (см. .env.example).
+defaults:
+  interval: 60s
+  timeout: 10s
+  failures_to_down: 3
+
+monitors:
+  - slug: azzb
+    name: azzb.ru
+    url: https://azzb.ru
+    expect_status: 200
+  # manshoo.ru добавится после деплоя сайта (Phase 2):
+  # - slug: manshoo
+  #   name: manshoo.ru
+  #   url: https://manshoo.ru
+  #   expect_status: 200

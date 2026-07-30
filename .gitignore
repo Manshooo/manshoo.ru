@@ -23,6 +23,7 @@ frontend/vite.config.ts.timestamp-*
 
 # --- Go (uptime) ---
 uptime/tmp/
+uptime/data/
 *.test
 coverage.out
 

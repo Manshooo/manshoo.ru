@@ -16,8 +16,8 @@ jobs:
     name: lint & test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: uptime/go.mod
           # без go.sum (зависимостей пока нет) кэшу нечего ключевать
@@ -27,7 +27,7 @@ jobs:
       - name: go vet
         run: go vet ./...
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           version: latest
           working-directory: uptime

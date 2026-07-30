@@ -1,0 +1,37 @@
+name: uptime
+
+on:
+  push:
+    branches: [main]
+    paths: ["uptime/**", ".github/workflows/uptime.yml"]
+  pull_request:
+    paths: ["uptime/**", ".github/workflows/uptime.yml"]
+
+defaults:
+  run:
+    working-directory: uptime
+
+jobs:
+  checks:
+    name: lint & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: uptime/go.mod
+          # без go.sum (зависимостей пока нет) кэшу нечего ключевать
+          cache: false
+      - name: gofmt
+        run: test -z "$(gofmt -l .)"
+      - name: go vet
+        run: go vet ./...
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          working-directory: uptime
+      - name: Tests
+        run: go test ./...
+      - name: Build
+        run: go build ./...

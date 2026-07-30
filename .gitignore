@@ -1,0 +1,39 @@
+# --- env / секреты ---
+.env
+.env.*
+!.env.example
+
+# --- Python (api) ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+api/db.sqlite3
+api/media/
+api/staticfiles/
+
+# --- Node (frontend) ---
+node_modules/
+frontend/.svelte-kit/
+frontend/build/
+frontend/vite.config.ts.timestamp-*
+
+# --- Go (uptime) ---
+uptime/tmp/
+*.test
+coverage.out
+
+# --- Docker ---
+docker-compose.override.yml
+
+# --- IDE / OS ---
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# --- Claude Code (локальные настройки) ---
+.claude/settings.local.json

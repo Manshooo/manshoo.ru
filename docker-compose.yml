@@ -1,0 +1,66 @@
+# Dev-окружение: docker compose up --build
+# Все сервисы с hot-reload; креды ниже — только для dev, prod живёт в docker-compose.prod.yml.
+name: manshoo
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # зависимости из образа, не с хоста
+    environment:
+      VITE_USE_POLLING: "1" # inotify не пробрасывается через volume-mount на Windows
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: ./api
+      target: dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api:/app
+    environment:
+      DEBUG: "1"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: manshoo
+      POSTGRES_USER: manshoo
+      POSTGRES_PASSWORD: manshoo # dev-only
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  uptime:
+    build:
+      context: ./uptime
+      target: dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./uptime:/app
+      - /app/tmp # артефакты сборки air не засоряют хост
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: manshoo
+      POSTGRES_USER: manshoo
+      POSTGRES_PASSWORD: manshoo # dev-only
+    ports:
+      - "5432:5432" # удобно подключаться psql/GUI с хоста; убери, если порт занят
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U manshoo -d manshoo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:

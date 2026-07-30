@@ -1,0 +1,8 @@
+# Прод-композиция. Заполняется по фазам роадмапа (docs/06-roadmap.md):
+#   Phase 1 — сервис uptime (первый деплой на VPS, образ из ghcr.io)
+#   Phase 2 — caddy (или существующий nginx — открытый вопрос №1 в docs/00-vision.md),
+#             frontend, api, postgres + volumes, healthchecks, бэкапы
+# Схема прода описана в docs/01-architecture.md.
+#
+# Запуск на VPS (когда появится содержимое):
+#   docker compose -f docker-compose.prod.yml up -d

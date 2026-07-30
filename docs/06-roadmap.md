@@ -18,18 +18,20 @@ Uptime идёт раньше сайта осознанно: он полезен 
 
 Заметки по факту: Go в образах — 1.26 (air требует ≥1.26); frontend понадобился `@types/node` для `process.env` в vite-конфиге; тестам api в CI нужен `SECRET_KEY` через env workflow. Dependabot при первом же скане открыл PR-ы, часть с красными мажорами (typescript 7, vite-plugin-svelte 7 → требует vite 7) — разобрать при случае.
 
-## Phase 1 — Uptime v1 (~3–5 вечеров)
+## Phase 1 — Uptime v1 (~3–5 вечеров) — 🔶 код готов 2026-07-30, остался деплой
 
 Цель: свой Go-сервис мониторит azzb.ru и шлёт алерты в Telegram. Спека: [05-uptime.md](05-uptime.md).
 
-- [ ] v0-спайк: CLI-проверка azzb.ru по конфигу (1 вечер, цель — пощупать Go).
-- [ ] Scheduler + state machine (N неудач → down) + SQLite-хранилище.
-- [ ] Telegram-уведомления на переходы up/down.
-- [ ] JSON API `/api/status` + `/healthz`; тесты checker'а и state machine.
-- [ ] Multi-stage Dockerfile (CGO-free, distroless); CI: build+push в ghcr.
-- [ ] Деплой на VPS (`docker-compose.prod.yml`, пока только uptime) — **решается открытый вопрос №1** (что за VPS, есть ли там nginx).
+- [x] ~~v0-спайк~~ — объединён с v1, сервис написан целиком.
+- [x] Scheduler + state machine (N неудач → down, ускоренные перепроверки) + SQLite-хранилище.
+- [x] Telegram-уведомления на переходы up/down (без токена — фолбэк в лог).
+- [x] JSON API `/api/status`, `/api/monitors/{slug}` + `/healthz`; тесты всех пакетов.
+- [x] Multi-stage Dockerfile (CGO-free, distroless, 22 МБ, флаг `-healthcheck`); CI пушит образ: `ghcr.io/manshooo/manshoo.ru-uptime`.
+- [ ] Деплой на VPS (`docker-compose.prod.yml` готов, пока только uptime) — **блокер: открытый вопрос №1** (что за VPS, есть ли там nginx). Для запуска нужны: доступ к серверу, `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` в `uptime/.env`.
 
-**Готово, когда:** остановка azzb.ru (или тестового монитора) приводит к алерту в Telegram в течение ~3 минут; сервис переживает рестарт без ложных алертов.
+**Готово, когда:** остановка azzb.ru (или тестового монитора) приводит к алерту в Telegram в течение ~3 минут (переходы проверены тестами и живым контейнером; реальный Telegram — на деплое); сервис переживает рестарт без ложных алертов ✅ (состояние читается из SQLite — проверено рестартом контейнера).
+
+Заметки по факту: роутер — stdlib вместо chi (Go 1.22+ умеет методы и `{slug}`, см. [05-uptime.md](05-uptime.md)); golangci-lint строже `go vet` — errcheck требует явного `_ =` даже на отложенных Close.
 
 ## Phase 2 — Сайт MVP (~5–8 вечеров)
 

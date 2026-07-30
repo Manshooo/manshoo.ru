@@ -14,9 +14,9 @@ Uptime идёт раньше сайта осознанно: он полезен 
 - [x] Линтеры/форматтеры: ruff (api), eslint+prettier (frontend), golangci-lint (uptime); Dependabot.
 - [x] Корневой README: что это, как поднять dev-окружение, ссылка на docs/.
 
-**Готово, когда:** `docker compose up` поднимает три «hello world»-сервиса ✅ (проверено локально: healthz всех трёх + SSR главной); CI зелёный на PR ⏳ (проверится первым пушем в GitHub).
+**Готово, когда:** `docker compose up` поднимает три «hello world»-сервиса ✅ (проверено локально: healthz всех трёх + SSR главной); CI зелёный ✅ (api/frontend/uptime на main).
 
-Заметки по факту: Go в образах — 1.26 (air требует ≥1.26); frontend понадобился `@types/node` для `process.env` в vite-конфиге.
+Заметки по факту: Go в образах — 1.26 (air требует ≥1.26); frontend понадобился `@types/node` для `process.env` в vite-конфиге; тестам api в CI нужен `SECRET_KEY` через env workflow. Dependabot при первом же скане открыл PR-ы, часть с красными мажорами (typescript 7, vite-plugin-svelte 7 → требует vite 7) — разобрать при случае.
 
 ## Phase 1 — Uptime v1 (~3–5 вечеров)
 

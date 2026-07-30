@@ -13,7 +13,8 @@ services:
     environment:
       PORT: "3000"
       ORIGIN: https://manshoo.ru
-      API_URL: http://api:8000
+      API_URL: http://api:8000 # SSR по внутренней сети
+      PUBLIC_API_URL: https://api.manshoo.ru # админка из браузера
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:

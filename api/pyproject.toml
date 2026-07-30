@@ -16,3 +16,5 @@ select = [
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
 testpaths = ["tests"]
+# Загрузки из тестов не должны падать в рабочий media/
+addopts = "-p no:cacheprovider"

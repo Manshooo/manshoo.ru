@@ -22,6 +22,14 @@
 	type="article"
 />
 
+<svelte:head>
+	{#if data.preview}<meta name="robots" content="noindex" />{/if}
+</svelte:head>
+
+{#if data.preview}
+	<p class="preview-banner">Предпросмотр: страница видна только вам.</p>
+{/if}
+
 <nav class="crumbs"><a href="/#projects">← Все проекты</a></nav>
 
 <article>
@@ -91,6 +99,14 @@
 <style>
 	.crumbs {
 		margin-bottom: 1.5rem;
+		font-size: 0.9rem;
+	}
+	.preview-banner {
+		background: var(--card);
+		border: 1px dashed var(--border);
+		border-radius: 8px;
+		padding: 0.5rem 0.9rem;
+		color: var(--muted);
 		font-size: 0.9rem;
 	}
 	h1 {

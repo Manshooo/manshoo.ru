@@ -48,7 +48,7 @@ flowchart LR
 | `api.manshoo.ru/media/*` | nginx напрямую из `/var/www/manshoo/media` |
 | `api.manshoo.ru/robots.txt` | `Disallow: /` — API не индексируем |
 
-manshoo.ru и api.manshoo.ru — один registrable domain, т.е. **same-site**: сессионные куки Django будут работать из админки на manshoo.ru без танцев (Phase 3 добавит только CORS-заголовки).
+manshoo.ru и api.manshoo.ru — один registrable domain, т.е. **same-site**: сессионная кука Django ходит из админки на manshoo.ru без танцев. Реализовано в Phase 3: CORS с единственным origin `https://manshoo.ru` + `SESSION_COOKIE_DOMAIN=.manshoo.ru` (общая кука нужна, чтобы SSR мог показать владельцу черновик по `?preview=1`).
 
 ## Деплой (ADR-006)
 

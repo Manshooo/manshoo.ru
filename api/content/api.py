@@ -19,5 +19,8 @@ def projects(request: HttpRequest):
 
 
 @router.get("/projects/{slug}", response=ProjectDetailOut)
-def project(request: HttpRequest, slug: str) -> Project:
+def project(request: HttpRequest, slug: str, preview: bool = False) -> Project:
+    """preview=1 отдаёт черновик — но только владельцу с активной сессией."""
+    if preview and request.user.is_authenticated:
+        return get_object_or_404(Project, slug=slug)
     return get_object_or_404(Project, slug=slug, is_published=True)

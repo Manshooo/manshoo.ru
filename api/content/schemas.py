@@ -24,6 +24,16 @@ class ProfileOut(Schema):
         return request.build_absolute_uri(obj.photo.url)
 
 
+class ProfileIn(Schema):
+    name: str
+    headline: str
+    bio_md: str = ""
+    location: str = ""
+    skills: list[str] = []
+    socials: dict[str, str] = {}
+    meta_description: str = ""
+
+
 class ProjectCardOut(Schema):
     slug: str
     title: str
@@ -49,6 +59,31 @@ class ProjectCardOut(Schema):
 
 
 class ProjectDetailOut(ProjectCardOut):
+    id: int
     description_md: str
     highlights: list[str]
     links: dict[str, str]
+    is_published: bool
+    sort_order: int
+
+
+class ProjectIn(Schema):
+    """Вход формы админки. slug можно не присылать — соберётся из title."""
+
+    title: str
+    tagline: str
+    slug: str = ""
+    description_md: str = ""
+    role: str = ""
+    org: str = ""
+    project_type: str = Project.Type.PET
+    status: str = Project.Status.ACTIVE
+    period_start: date
+    period_end: date | None = None
+    stack: list[str] = []
+    highlights: list[str] = []
+    links: dict[str, str] = {}
+    is_published: bool = False
+    is_featured: bool = False
+    sort_order: int = 0
+    uptime_monitor_slug: str = ""

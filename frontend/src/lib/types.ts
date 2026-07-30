@@ -33,7 +33,10 @@ export interface ProjectCard {
 }
 
 export interface ProjectDetail extends ProjectCard {
+	id: number;
 	description_md: string;
 	highlights: string[];
 	links: Record<string, string>;
+	is_published: boolean;
+	sort_order: number;
 }

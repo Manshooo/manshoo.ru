@@ -50,7 +50,7 @@ func run(log *slog.Logger, addr string) error {
 	if err != nil {
 		return err
 	}
-	defer st.Close()
+	defer func() { _ = st.Close() }()
 
 	var notifier scheduler.Notifier
 	token, chatID := os.Getenv("TELEGRAM_BOT_TOKEN"), os.Getenv("TELEGRAM_CHAT_ID")
@@ -125,7 +125,7 @@ func runHealthcheck(addr string) int {
 		fmt.Fprintln(os.Stderr, "healthcheck:", err)
 		return 1
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		fmt.Fprintln(os.Stderr, "healthcheck: status", resp.StatusCode)
 		return 1

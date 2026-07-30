@@ -175,7 +175,7 @@ func (s *Store) History(slug string, since time.Time, limit int) ([]CheckRow, er
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []CheckRow
 	for rows.Next() {

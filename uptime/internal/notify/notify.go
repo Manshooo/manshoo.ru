@@ -93,7 +93,7 @@ func (t *Telegram) Notify(ctx context.Context, e scheduler.Event) {
 		t.log.Error("telegram: send", "err", err)
 		return
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
 		t.log.Error("telegram: api error", "status", resp.StatusCode, "body", string(body))

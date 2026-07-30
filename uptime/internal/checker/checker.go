@@ -45,7 +45,7 @@ func (c *Checker) Check(ctx context.Context, m config.Monitor) Result {
 	if err != nil {
 		return Result{Latency: latency, Err: failReason(ctx, err)}
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	// Дочитываем кусочек тела, чтобы соединение вернулось в keep-alive пул.
 	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 64<<10))
 

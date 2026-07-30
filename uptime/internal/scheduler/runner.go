@@ -113,7 +113,7 @@ func (r *Runner) tick(ctx context.Context, m config.Monitor, st State) State {
 	r.log.Info("status change", "monitor", m.Slug, "from", tr.From, "to", tr.To)
 
 	// Стартовый unknown → up — не событие, алертов не шлём.
-	if !(tr.From == StatusUnknown && tr.To == StatusUp) {
+	if tr.From != StatusUnknown || tr.To != StatusUp {
 		r.notifier.Notify(ctx, Event{Monitor: m, Tr: *tr, Reason: res.Err})
 	}
 	return newSt

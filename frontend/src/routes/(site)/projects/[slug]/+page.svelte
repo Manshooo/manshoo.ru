@@ -26,8 +26,8 @@
 	{#if data.preview}<meta name="robots" content="noindex" />{/if}
 </svelte:head>
 
-{#if data.preview}
-	<p class="preview-banner">Предпросмотр: страница видна только вам.</p>
+{#if data.preview && !p.is_published}
+	<p class="preview-banner">Предпросмотр черновика: страница видна только вам.</p>
 {/if}
 
 <nav class="crumbs"><a href="/#projects">← Все проекты</a></nav>

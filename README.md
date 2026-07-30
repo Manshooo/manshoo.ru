@@ -10,7 +10,7 @@
 
 ## Статус
 
-🚧 Phase 0–2 по коду готовы: uptime-чекер мониторит проекты, сайт (главная + портфолио + SEO-база) написан и проверен. Деплой — одноразовый `sudo bash deploy/bootstrap-vps.sh` на VPS, дальше всё едет через GitHub Actions (self-hosted runner). Документация — в [docs/](docs/):
+Сайт живёт на [manshoo.ru](https://manshoo.ru): портфолио, собственная админка (`/admin`) и uptime-мониторинг личных проектов. Деплой — push в main. Документация — в [docs/](docs/):
 
 - [docs/README.md](docs/README.md) — карта документации
 - [docs/06-roadmap.md](docs/06-roadmap.md) — текущий план работ по фазам

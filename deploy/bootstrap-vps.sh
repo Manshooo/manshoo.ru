@@ -41,7 +41,8 @@ if [ ! -f "$DEPLOY_DIR/api/.env" ]; then
   cat >"$DEPLOY_DIR/api/.env" <<EOF
 SECRET_KEY=$(openssl rand -base64 48 | tr -d '\n=+/')
 DEBUG=0
-ALLOWED_HOSTS=api.manshoo.ru,127.0.0.1,localhost
+# «api» — имя сервиса в docker-сети: так к Django ходит SSR-фронтенда
+ALLOWED_HOSTS=api.manshoo.ru,127.0.0.1,localhost,api
 CSRF_TRUSTED_ORIGINS=https://api.manshoo.ru,https://manshoo.ru
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432

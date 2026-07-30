@@ -18,7 +18,7 @@ Uptime идёт раньше сайта осознанно: он полезен 
 
 Заметки по факту: Go в образах — 1.26 (air требует ≥1.26); frontend понадобился `@types/node` для `process.env` в vite-конфиге; тестам api в CI нужен `SECRET_KEY` через env workflow. Dependabot при первом же скане открыл PR-ы, часть с красными мажорами (typescript 7, vite-plugin-svelte 7 → требует vite 7) — разобрать при случае.
 
-## Phase 1 — Uptime v1 (~3–5 вечеров) — 🔶 код готов 2026-07-30, остался деплой
+## Phase 1 — Uptime v1 (~3–5 вечеров) — ✅ завершена 2026-07-30 (в проде)
 
 Цель: свой Go-сервис мониторит azzb.ru и шлёт алерты в Telegram. Спека: [05-uptime.md](05-uptime.md).
 
@@ -27,13 +27,13 @@ Uptime идёт раньше сайта осознанно: он полезен 
 - [x] Telegram-уведомления на переходы up/down (без токена — фолбэк в лог).
 - [x] JSON API `/api/status`, `/api/monitors/{slug}` + `/healthz`; тесты всех пакетов.
 - [x] Multi-stage Dockerfile (CGO-free, distroless, 22 МБ, флаг `-healthcheck`); CI пушит образ: `ghcr.io/manshooo/manshoo.ru-uptime`.
-- [ ] Деплой на VPS — вопросы закрыты, обвязка готова: runner `manshoo-vps` зарегистрирован, deploy-джобы во всех workflow, компоуз заполнен. **Одно действие владельца: запустить [deploy/bootstrap-vps.sh](../deploy/bootstrap-vps.sh) под sudo** — дальше очередь деплоев поедет сама. Telegram-env опционален (без него алерты в лог), заполняется в `/var/www/manshoo/uptime/.env`.
+- [x] Деплой на VPS: bootstrap выполнен владельцем 2026-07-30, uptime в проде мониторит azzb.ru и manshoo.ru. Telegram-env ещё не заполнен → алерты пока в лог (`/var/www/manshoo/uptime/.env` + `docker compose ... up -d uptime`).
 
 **Готово, когда:** остановка azzb.ru (или тестового монитора) приводит к алерту в Telegram в течение ~3 минут (переходы проверены тестами и живым контейнером; реальный Telegram — на деплое); сервис переживает рестарт без ложных алертов ✅ (состояние читается из SQLite — проверено рестартом контейнера).
 
 Заметки по факту: роутер — stdlib вместо chi (Go 1.22+ умеет методы и `{slug}`, см. [05-uptime.md](05-uptime.md)); golangci-lint строже `go vet` — errcheck требует явного `_ =` даже на отложенных Close.
 
-## Phase 2 — Сайт MVP (~5–8 вечеров) — 🔶 код готов 2026-07-30, деплой ждёт bootstrap
+## Phase 2 — Сайт MVP (~5–8 вечеров) — ✅ в проде 2026-07-30; хвосты — за владельцем
 
 Цель: manshoo.ru в проде — главная + портфолио, контент через Django-админку. Спеки: [02-data-model.md](02-data-model.md), [04-seo.md](04-seo.md).
 
@@ -42,13 +42,16 @@ Uptime идёт раньше сайта осознанно: он полезен 
 - [x] Типы контракта: вручную в `src/lib/types.ts` (осознанное упрощение — генерация из OpenAPI в Phase 3, см. [02-data-model.md](02-data-model.md)).
 - [x] SEO-база: title/description/canonical, OG-теги (og:image — в Phase 4 с генератором), sitemap.xml с lastmod, robots.txt, честные 404, favicon.
 - [x] Прод-обвязка: системный nginx (конфиги в bootstrap), TLS certbot, compose api+frontend+postgres, deploy-джобы.
-- [ ] **Деплой**: ждёт `sudo bash deploy/bootstrap-vps.sh` от владельца (см. Phase 1) — после него очередь джобов доедет сама.
-- [ ] Бэкап-крон: pg_dump + media + sqlite uptime, разово проверить восстановление (после первого деплоя).
-- [ ] Наполнить контент: отредактировать профиль, дописать и опубликовать azzb.ru через `api.manshoo.ru/django-admin/` (пароль — в `/var/www/manshoo/api/.env`).
-- [x] Монитор manshoo.ru в uptime (включён в config.yaml, деплоится той же волной).
+- [x] **Деплой**: manshoo.ru и api.manshoo.ru живы (nginx → контейнеры, TLS ок, редиректы ок, честные 404).
+- [x] Бэкап-крон (04:10): pg_dump + media + sqlite uptime, ретенция 14/7; восстановление проверено в restore_test (2 проекта, профиль).
+- [ ] Наполнить контент: отредактировать профиль, дописать и опубликовать azzb.ru через `api.manshoo.ru/django-admin/` (логин `manshoo`, пароль — в `/var/www/manshoo/api/.env`).
+- [x] Монитор manshoo.ru в uptime — оба монитора `up`.
 - [ ] Search Console + Яндекс.Вебмастер: подтвердить домен, отправить sitemap (действие владельца — нужны его аккаунты).
+- [ ] Замерить Lighthouse (критерий SEO ≥ 95) — не гонялся.
 
-**Готово, когда:** manshoo.ru открывается, контент виден с выключенным JS, Lighthouse SEO ≥ 95, uptime следит за обоими доменами.
+**Готово, когда:** manshoo.ru открывается ✅, контент виден с выключенным JS ✅, Lighthouse SEO ≥ 95 ⏳, uptime следит за обоими доменами ✅.
+
+Заметки по факту: `ALLOWED_HOSTS` обязан включать docker-имя сервиса `api` — SSR ходит по внутренней сети с `Host: api:8000`, иначе 400 → SvelteKit отдаёт 502 (наступили при первом деплое, чинится в bootstrap); www.manshoo.ru пока отдаёт 200 вместо 301 на apex — canonical прикрывает, поправить nginx при следующем sudo-заходе.
 
 ## Phase 3 — Своя админка (~4–6 вечеров)
 

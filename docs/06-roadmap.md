@@ -28,7 +28,7 @@ Uptime идёт раньше сайта осознанно: он полезен 
 - [x] JSON API `/api/status`, `/api/monitors/{slug}` + `/healthz`; тесты всех пакетов.
 - [x] Multi-stage Dockerfile (CGO-free, distroless, 22 МБ, флаг `-healthcheck`); CI пушит образ: `ghcr.io/manshooo/manshoo.ru-uptime`.
 - [x] Деплой на VPS: bootstrap выполнен владельцем 2026-07-30, uptime в проде мониторит azzb.ru и manshoo.ru.
-- [ ] Telegram-алерты: env заполнен, но `api.telegram.org` заблокирован с хостинга → нужен прокси (`TELEGRAM_API_BASE`, воркер в [deploy/telegram-proxy-worker.js](../deploy/telegram-proxy-worker.js)) и **перевыпуск токена** (старый утёк в логи из-за бага логирования — исправлен, см. [05-uptime.md](05-uptime.md)).
+- [x] Telegram-алерты: env заполнен, но `api.telegram.org` заблокирован с хостинга → нужен прокси (`TELEGRAM_API_BASE`, воркер в [deploy/telegram-proxy-worker.js](../deploy/telegram-proxy-worker.js)) и **перевыпуск токена** (старый утёк в логи из-за бага логирования — исправлен, см. [05-uptime.md](05-uptime.md)).
 
 **Готово, когда:** остановка azzb.ru (или тестового монитора) приводит к алерту в Telegram в течение ~3 минут (переходы проверены тестами и живым контейнером; реальный Telegram — на деплое); сервис переживает рестарт без ложных алертов ✅ (состояние читается из SQLite — проверено рестартом контейнера).
 
@@ -47,8 +47,9 @@ Uptime идёт раньше сайта осознанно: он полезен 
 - [x] Бэкап-крон (04:10): pg_dump + media + sqlite uptime, ретенция 14/7; восстановление проверено в restore_test (2 проекта, профиль).
 - [ ] Наполнить контент: отредактировать профиль, дописать и опубликовать azzb.ru через `api.manshoo.ru/django-admin/` (логин `manshoo`, пароль — в `/var/www/manshoo/api/.env`).
 - [x] Монитор manshoo.ru в uptime — оба монитора `up`.
-- [ ] Search Console + Яндекс.Вебмастер: подтвердить домен, отправить sitemap (действие владельца — нужны его аккаунты).
-- [ ] Замерить Lighthouse (критерий SEO ≥ 95) — не гонялся.
+- [x] Search Console + Яндекс.Вебмастер: подтвердить домен, отправить sitemap (действие владельца — нужны его аккаунты).
+- [x] Замерить Lighthouse. Результат - 100/100
+- [ ] Обновить протокол до http/2 или http/3. Улучшить производительность убрав блокирующие запросы - собственные сайта (.css файлы), а также исправить дерево зависимостей (по возможности)
 
 **Готово, когда:** manshoo.ru открывается ✅, контент виден с выключенным JS ✅, Lighthouse SEO ≥ 95 ⏳, uptime следит за обоими доменами ✅.
 
@@ -72,8 +73,8 @@ Uptime идёт раньше сайта осознанно: он полезен 
 
 - [ ] basic auth на `/django-admin` (nginx на VPS).
 - [ ] `www.manshoo.ru` → 301 на apex (сейчас 200; canonical прикрывает).
-- [ ] Ротация Telegram-токена (утёк в логи, см. [05-uptime.md](05-uptime.md)).
-- [ ] Замер Lighthouse (критерий SEO ≥ 95 из Phase 2).
+- [x] Ротация Telegram-токена (утёк в логи, см. [05-uptime.md](05-uptime.md)).
+- [x] Замер Lighthouse (критерий SEO ≥ 95 из Phase 2).
 
 ## Phase 4 — Интеграции и полировка (~3–5 вечеров)
 

@@ -11,7 +11,7 @@
 </script>
 
 <Seo
-	title={`${profile.name} — проекты и портфолио`}
+	title={`${profile.name}: проекты и портфолио`}
 	description={profile.meta_description || profile.headline}
 	path="/"
 />
@@ -32,7 +32,7 @@
 
 <section id="projects">
 	<h2>Проекты</h2>
-	<p class="note">Вместо раздела «опыт работы»: что делал, какую роль играл и что получилось.</p>
+	<p class="note">Ознакомьтесь с моими проектами!</p>
 	{#if projects.length}
 		<div class="grid">
 			{#each projects as p (p.slug)}

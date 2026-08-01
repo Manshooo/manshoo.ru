@@ -5,7 +5,10 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 const config = {
 	preprocess: vitePreprocess(),
 	kit: {
-		adapter: adapter()
+		adapter: adapter(),
+		// Стилей на страницу — пара килобайт, поэтому вшиваем их в HTML:
+		// три блокирующих запроса за CSS исчезают, рендер не ждёт сети.
+		inlineStyleThreshold: 4096
 	}
 };
 

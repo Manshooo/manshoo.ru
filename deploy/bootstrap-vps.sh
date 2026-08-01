@@ -67,6 +67,9 @@ if [ -d "$RUNNER_HOME" ] && [ ! -f "$RUNNER_HOME/.service" ]; then
   (cd "$RUNNER_HOME" && ./svc.sh install manshoo_user && ./svc.sh start)
 fi
 
+# Здесь пишутся стартовые конфиги — их достаточно, чтобы certbot выпустил
+# сертификаты. Финальное состояние (HTTP/2, www → 301, basic auth на
+# /django-admin) задаёт deploy/nginx-hardening.sh — запусти его после certbot.
 echo "== 6/7 nginx: manshoo.ru → :3000 (frontend), api.manshoo.ru → :8000 (api) =="
 cat >/etc/nginx/sites-available/manshoo <<'NGINX'
 server {
@@ -141,3 +144,5 @@ echo "1. Runner запущен — очередь деплоев в GitHub Actio
 echo "2. Пароль Django-админки: DJANGO_SUPERUSER_PASSWORD в $DEPLOY_DIR/api/.env"
 echo "3. Telegram-алерты: заполни $DEPLOY_DIR/uptime/.env (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID),"
 echo "   затем: cd $DEPLOY_DIR && docker compose -f docker-compose.prod.yml up -d uptime"
+echo "4. Донастрой nginx (HTTP/2, www → 301, basic auth на /django-admin):"
+echo "   sudo bash nginx-hardening.sh"

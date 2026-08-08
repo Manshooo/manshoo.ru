@@ -16,8 +16,10 @@ services:
       VITE_USE_POLLING: "1" # inotify не пробрасывается через volume-mount на Windows
       API_URL: http://api:8000 # SSR ходит по внутренней сети
       PUBLIC_API_URL: http://localhost:8000 # админка ходит из браузера
+      UPTIME_URL: http://uptime:8080 # статусы для бейджей
     depends_on:
       - api
+      - uptime
 
   api:
     build:

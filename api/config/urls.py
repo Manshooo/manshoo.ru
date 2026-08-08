@@ -17,11 +17,13 @@ def robots(request: HttpRequest) -> HttpResponse:
 
 
 urlpatterns = [
-    path("django-admin/", admin.site.urls),
     path("healthz", healthz),
     path("robots.txt", robots),
     path("api/", api.urls),
 ]
+
+if settings.ENABLE_DJANGO_ADMIN:
+    urlpatterns.insert(0, path("django-admin/", admin.site.urls))
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

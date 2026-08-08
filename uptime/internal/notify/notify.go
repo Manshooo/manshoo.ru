@@ -76,9 +76,13 @@ func NewTelegram(token, chatID, base string, log *slog.Logger) *Telegram {
 }
 
 func (t *Telegram) Notify(ctx context.Context, e scheduler.Event) {
+	t.NotifyText(ctx, Format(e))
+}
+
+func (t *Telegram) NotifyText(ctx context.Context, text string) {
 	payload, err := json.Marshal(map[string]any{
 		"chat_id":                  t.chatID,
-		"text":                     Format(e),
+		"text":                     text,
 		"disable_web_page_preview": true,
 	})
 	if err != nil {
@@ -123,6 +127,10 @@ type Log struct {
 
 func NewLog(log *slog.Logger) *Log { return &Log{log: log} }
 
-func (l *Log) Notify(_ context.Context, e scheduler.Event) {
-	l.log.Warn("alert (telegram not configured)", "text", Format(e))
+func (l *Log) Notify(ctx context.Context, e scheduler.Event) {
+	l.NotifyText(ctx, Format(e))
+}
+
+func (l *Log) NotifyText(_ context.Context, text string) {
+	l.log.Warn("alert (telegram not configured)", "text", text)
 }

@@ -5,8 +5,15 @@
 		title,
 		description,
 		path,
-		type = 'website'
-	}: { title: string; description: string; path: string; type?: 'website' | 'article' } = $props();
+		type = 'website',
+		image = null
+	}: {
+		title: string;
+		description: string;
+		path: string;
+		type?: 'website' | 'article';
+		image?: string | null;
+	} = $props();
 
 	const url = $derived(`${SITE_URL}${path}`);
 </script>
@@ -20,5 +27,12 @@
 	<meta property="og:url" content={url} />
 	<meta property="og:type" content={type} />
 	<meta property="og:locale" content="ru_RU" />
-	<meta name="twitter:card" content="summary" />
+	{#if image}
+		<meta property="og:image" content={image} />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+	{:else}
+		<meta name="twitter:card" content="summary" />
+	{/if}
 </svelte:head>

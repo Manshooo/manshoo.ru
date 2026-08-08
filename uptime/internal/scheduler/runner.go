@@ -20,6 +20,8 @@ type Store interface {
 	RecordCheck(slug string, at time.Time, res checker.Result) error
 	LoadState(slug string) (State, bool, error)
 	SaveState(slug string, s State) error
+	LoadTLS(slug string) (TLSRecord, bool, error)
+	SaveTLS(slug string, rec TLSRecord) error
 }
 
 // Event — событие смены статуса для уведомлений.
@@ -31,6 +33,8 @@ type Event struct {
 
 type Notifier interface {
 	Notify(ctx context.Context, e Event)
+	// NotifyText — произвольное сообщение (например, о сроке сертификата)
+	NotifyText(ctx context.Context, text string)
 }
 
 type Runner struct {
@@ -45,7 +49,8 @@ func NewRunner(cfg *config.Config, c *checker.Checker, s Store, n Notifier, log 
 	return &Runner{cfg: cfg, checker: c, store: s, notifier: n, log: log}
 }
 
-// Run запускает по горутине на монитор и блокируется до отмены ctx.
+// Run запускает по горутине на монитор плюс фоновые циклы TLS и heartbeat;
+// блокируется до отмены ctx.
 func (r *Runner) Run(ctx context.Context) {
 	var wg sync.WaitGroup
 	for _, m := range r.cfg.Monitors {
@@ -55,6 +60,21 @@ func (r *Runner) Run(ctx context.Context) {
 			r.runMonitor(ctx, m)
 		}()
 	}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		r.tlsLoop(ctx)
+	}()
+
+	if r.cfg.Heartbeat.URL != "" {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			r.heartbeatLoop(ctx)
+		}()
+	}
+
 	wg.Wait()
 }
 

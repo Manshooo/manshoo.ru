@@ -1,0 +1,25 @@
+name: lighthouse
+
+# Гоняем по живому сайту, а не по локальной сборке: так проверяется всё
+# разом — nginx, HTTP/2, TLS, реальный контент. Запуск руками или раз в
+# неделю; красный результат не блокирует разработку, а сообщает о просадке.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # понедельник, 06:00 UTC
+
+jobs:
+  audit:
+    name: audit manshoo.ru
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Lighthouse
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            https://manshoo.ru/
+            https://manshoo.ru/status
+          budgetPath: .github/lighthouse-budget.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true

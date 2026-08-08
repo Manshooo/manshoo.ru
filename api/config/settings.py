@@ -14,6 +14,12 @@ if not SECRET_KEY:
     else:
         raise ImproperlyConfigured("SECRET_KEY обязателен при DEBUG=0")
 
+# Штатный редактор контента — своя админка на manshoo.ru/admin. Django-админку
+# в проде держим выключенной: лишний известный адрес для перебора паролей.
+# Понадобится разово («сломать стекло») — ENABLE_DJANGO_ADMIN=1 и рестарт api;
+# basic auth на nginx для этого пути уже настроен.
+ENABLE_DJANGO_ADMIN = os.environ.get("ENABLE_DJANGO_ADMIN", "1" if DEBUG else "0") == "1"
+
 ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h.strip()]
 if DEBUG and not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ["*"]

@@ -1,6 +1,9 @@
 <script lang="ts">
+	import JsonLd from '$lib/components/JsonLd.svelte';
 	import Seo from '$lib/components/Seo.svelte';
+	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import { formatPeriod, statusLabels, typeLabels } from '$lib/format';
+	import { personJsonLd, webSiteJsonLd } from '$lib/jsonld';
 	import { renderMarkdown } from '$lib/markdown';
 	import type { PageData } from './$types';
 
@@ -15,6 +18,7 @@
 	description={profile.meta_description || profile.headline}
 	path="/"
 />
+<JsonLd data={[personJsonLd(profile), webSiteJsonLd(profile)]} />
 
 <section class="hero">
 	<h1>{profile.name}</h1>
@@ -39,7 +43,11 @@
 				<a class="card" href={`/projects/${p.slug}`}>
 					<div class="card-head">
 						<h3>{p.title}</h3>
-						<span class="badge" data-status={p.status}>{statusLabels[p.status]}</span>
+						{#if data.monitors[p.uptime_monitor_slug]}
+							<StatusBadge monitor={data.monitors[p.uptime_monitor_slug]} compact />
+						{:else}
+							<span class="badge" data-status={p.status}>{statusLabels[p.status]}</span>
+						{/if}
 					</div>
 					<p class="tagline">{p.tagline}</p>
 					<p class="meta">

@@ -18,6 +18,7 @@
 		<nav>
 			<a href="/" class="brand">{data.profile.name}</a>
 			<a href="/#projects">Проекты</a>
+			<a href="/status">Статус</a>
 		</nav>
 	</header>
 

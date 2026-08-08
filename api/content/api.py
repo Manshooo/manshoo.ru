@@ -1,8 +1,9 @@
-from django.http import HttpRequest
+from django.http import FileResponse, HttpRequest
 from django.shortcuts import get_object_or_404
 from ninja import Router
 
 from .models import Profile, Project
+from .og import get_or_create_og
 from .schemas import ProfileOut, ProjectCardOut, ProjectDetailOut
 
 router = Router(tags=["content"])
@@ -24,3 +25,13 @@ def project(request: HttpRequest, slug: str, preview: bool = False) -> Project:
     if preview and request.user.is_authenticated:
         return get_object_or_404(Project, slug=slug)
     return get_object_or_404(Project, slug=slug, is_published=True)
+
+
+@router.get("/projects/{slug}/og.png", include_in_schema=False)
+def project_og(request: HttpRequest, slug: str):
+    """Картинка превью ссылки. Рисуется один раз и кэшируется на диске."""
+    obj = get_object_or_404(Project, slug=slug, is_published=True)
+    path = get_or_create_og(obj, author=Profile.load().name)
+    response = FileResponse(path.open("rb"), content_type="image/png")
+    response["Cache-Control"] = "public, max-age=86400"
+    return response

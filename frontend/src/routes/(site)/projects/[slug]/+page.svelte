@@ -1,6 +1,9 @@
 <script lang="ts">
+	import JsonLd from '$lib/components/JsonLd.svelte';
 	import Seo from '$lib/components/Seo.svelte';
+	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import { formatPeriod, statusLabels, typeLabels } from '$lib/format';
+	import { breadcrumbsJsonLd, projectJsonLd } from '$lib/jsonld';
 	import { renderMarkdown } from '$lib/markdown';
 	import type { PageData } from './$types';
 
@@ -20,7 +23,9 @@
 	description={p.tagline}
 	path={`/projects/${p.slug}`}
 	type="article"
+	image={data.ogImage}
 />
+<JsonLd data={[projectJsonLd(p, data.profile), breadcrumbsJsonLd(p)]} />
 
 <svelte:head>
 	{#if data.preview}<meta name="robots" content="noindex" />{/if}
@@ -62,6 +67,15 @@
 				<dt>Статус</dt>
 				<dd>{statusLabels[p.status]}</dd>
 			</div>
+			{#if data.monitor}
+				<div>
+					<dt>Сейчас</dt>
+					<dd>
+						<StatusBadge monitor={data.monitor} />
+						<a class="status-link" href="/status">мониторинг</a>
+					</dd>
+				</div>
+			{/if}
 		</dl>
 
 		{#if p.stack.length}

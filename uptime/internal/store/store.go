@@ -32,6 +32,13 @@ CREATE TABLE IF NOT EXISTS state (
 	since INTEGER NOT NULL,
 	consec_fails INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS tls_state (
+	monitor_slug TEXT PRIMARY KEY,
+	not_after INTEGER NOT NULL,
+	days_left INTEGER NOT NULL,
+	checked_at INTEGER NOT NULL,
+	last_alert_at INTEGER NOT NULL DEFAULT 0
+);
 `
 
 type Store struct {
@@ -99,6 +106,53 @@ func (s *Store) SaveState(slug string, st scheduler.State) error {
 		slug, string(st.Status), st.Since.Unix(), st.ConsecFails,
 	)
 	return err
+}
+
+func (s *Store) LoadTLS(slug string) (scheduler.TLSRecord, bool, error) {
+	var notAfter, checkedAt, lastAlert int64
+	var daysLeft int
+	err := s.db.QueryRow(
+		`SELECT not_after, days_left, checked_at, last_alert_at FROM tls_state WHERE monitor_slug = ?`,
+		slug,
+	).Scan(&notAfter, &daysLeft, &checkedAt, &lastAlert)
+	if errors.Is(err, sql.ErrNoRows) {
+		return scheduler.TLSRecord{}, false, nil
+	}
+	if err != nil {
+		return scheduler.TLSRecord{}, false, err
+	}
+	return scheduler.TLSRecord{
+		NotAfter:    time.Unix(notAfter, 0),
+		DaysLeft:    daysLeft,
+		CheckedAt:   time.Unix(checkedAt, 0),
+		LastAlertAt: unixOrZero(lastAlert),
+	}, true, nil
+}
+
+func (s *Store) SaveTLS(slug string, rec scheduler.TLSRecord) error {
+	_, err := s.db.Exec(
+		`INSERT INTO tls_state (monitor_slug, not_after, days_left, checked_at, last_alert_at)
+		 VALUES (?, ?, ?, ?, ?)
+		 ON CONFLICT(monitor_slug) DO UPDATE SET
+		   not_after = excluded.not_after, days_left = excluded.days_left,
+		   checked_at = excluded.checked_at, last_alert_at = excluded.last_alert_at`,
+		slug, rec.NotAfter.Unix(), rec.DaysLeft, rec.CheckedAt.Unix(), zeroOrUnix(rec.LastAlertAt),
+	)
+	return err
+}
+
+func unixOrZero(ts int64) time.Time {
+	if ts == 0 {
+		return time.Time{}
+	}
+	return time.Unix(ts, 0)
+}
+
+func zeroOrUnix(t time.Time) int64 {
+	if t.IsZero() {
+		return 0
+	}
+	return t.Unix()
 }
 
 // Summary — агрегат за период: доля успешных проверок и медианная латентность.

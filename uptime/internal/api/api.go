@@ -49,6 +49,8 @@ type monitorStatus struct {
 	Uptime30d          *float64   `json:"uptime_30d"`
 	MedianLatencyMs24h *int64     `json:"median_latency_ms_24h"`
 	LastCheck          *lastCheck `json:"last_check"`
+	TLSDaysLeft        *int       `json:"tls_days_left"`
+	TLSNotAfter        *time.Time `json:"tls_not_after"`
 }
 
 func (h *handler) status(w http.ResponseWriter, r *http.Request) {
@@ -145,6 +147,15 @@ func (h *handler) monitorStatus(m config.Monitor) (monitorStatus, error) {
 	if last != nil {
 		lc := toLastCheck(*last)
 		ms.LastCheck = &lc
+	}
+
+	tlsRec, found, err := h.st.LoadTLS(m.Slug)
+	if err != nil {
+		return monitorStatus{}, err
+	}
+	if found {
+		ms.TLSDaysLeft = &tlsRec.DaysLeft
+		ms.TLSNotAfter = &tlsRec.NotAfter
 	}
 	return ms, nil
 }

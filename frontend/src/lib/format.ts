@@ -9,6 +9,19 @@ export function formatPeriod(start: string, end: string | null): string {
 	return `${from} — ${to}`;
 }
 
+/** «99.9%» или «нет данных», если проверок за период не было. */
+export function formatUptime(percent: number | null): string {
+	if (percent === null) return 'нет данных';
+	return `${percent.toFixed(percent === 100 ? 0 : 2)}%`;
+}
+
+const dateTime = new Intl.DateTimeFormat('ru', { dateStyle: 'short', timeStyle: 'short' });
+
+/** «в этом статусе с 01.08.2026, 14:05» */
+export function formatSince(iso: string): string {
+	return dateTime.format(new Date(iso));
+}
+
 export const typeLabels: Record<ProjectType, string> = {
 	work: 'работа',
 	pet: 'пет-проект',

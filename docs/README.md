@@ -14,6 +14,7 @@
 | [05-uptime.md](05-uptime.md) | Спека uptime-чекера на Go | Перед Phase 1 |
 | [06-roadmap.md](06-roadmap.md) | Фазы работ с критериями готовности | Всегда: это рабочий план |
 | [07-ideas.md](07-ideas.md) | Бэклог идей с оценкой ценность/усилия | Когда закончился роадмап или хочется вдохновения |
+| [08-tls-observatory.md](08-tls-observatory.md) | TLS-обсерватория: наблюдение за НУЦ-PKI, модель угроз, подписанный журнал | Перед Phase 6 |
 | [decisions/](decisions/) | ADR — зафиксированные технологические решения | Перед тем как «а может переписать на X» |
 
 ## Принятые решения (кратко)
@@ -26,6 +27,7 @@
 | [ADR-004](decisions/ADR-004-database-postgres.md) | БД сайта — **PostgreSQL**; у uptime — встроенный **SQLite** |
 | [ADR-005](decisions/ADR-005-uptime-go.md) | Uptime checker — **собственный сервис на Go** |
 | [ADR-006](decisions/ADR-006-deploy-selfhosted-runner.md) | Деплой — **self-hosted runner на VPS**, маршрутизация — **системный nginx** |
+| [ADR-007](decisions/ADR-007-tls-observatory.md) | Общественно-полезный трек — **TLS-обсерватория** (не зеркало корня), вклад в OONI/Atlas идёт первым |
 
 ## Как работать с ADR
 
@@ -34,4 +36,4 @@
 
 ## Статус проекта
 
-Сейчас репозиторий — каркас (пустые Dockerfile, workflows, compose). Первая фаза работ — см. [06-roadmap.md](06-roadmap.md).
+Phase 0–3 в проде: сайт, портфолио, своя админка, uptime-чекер. Дальше — Phase 4 (интеграции) и Phase 6 (TLS-обсерватория). Подробно — [06-roadmap.md](06-roadmap.md).

@@ -35,6 +35,16 @@ type Defaults struct {
 	Interval       Duration `yaml:"interval"`
 	Timeout        Duration `yaml:"timeout"`
 	FailuresToDown int      `yaml:"failures_to_down"`
+	// За сколько дней до истечения сертификата предупреждать (0 — не следить)
+	TLSExpiryWarnDays int `yaml:"tls_expiry_warn_days"`
+}
+
+// Heartbeat — пинг внешнего dead-man's-switch. URL берётся из env
+// (HEARTBEAT_URL), потому что это секрет: кто знает ссылку, тот может
+// заглушить тревогу.
+type Heartbeat struct {
+	URL      string
+	Interval Duration `yaml:"heartbeat_interval"`
 }
 
 type Monitor struct {
@@ -48,8 +58,9 @@ type Monitor struct {
 }
 
 type Config struct {
-	Defaults Defaults  `yaml:"defaults"`
-	Monitors []Monitor `yaml:"monitors"`
+	Defaults  Defaults  `yaml:"defaults"`
+	Monitors  []Monitor `yaml:"monitors"`
+	Heartbeat Heartbeat `yaml:"-"`
 }
 
 func Load(path string) (*Config, error) {
@@ -76,6 +87,14 @@ func Parse(raw []byte) (*Config, error) {
 	}
 	if cfg.Defaults.FailuresToDown == 0 {
 		cfg.Defaults.FailuresToDown = 3
+	}
+	if cfg.Defaults.TLSExpiryWarnDays == 0 {
+		cfg.Defaults.TLSExpiryWarnDays = 14
+	}
+
+	cfg.Heartbeat.URL = os.Getenv("HEARTBEAT_URL")
+	if cfg.Heartbeat.Interval == 0 {
+		cfg.Heartbeat.Interval = Duration(5 * time.Minute)
 	}
 
 	if len(cfg.Monitors) == 0 {

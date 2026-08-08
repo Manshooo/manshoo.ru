@@ -2,6 +2,10 @@ FROM python:3.13-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 WORKDIR /app
+# DejaVu — шрифт с кириллицей для генерации og:image (content/og.py)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY requirements.txt ./
 RUN uv pip install --system -r requirements.txt

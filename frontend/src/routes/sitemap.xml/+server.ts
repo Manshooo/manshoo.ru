@@ -7,6 +7,7 @@ export const GET: RequestHandler = async ({ fetch }) => {
 
 	const urls = [
 		`  <url><loc>${SITE_URL}/</loc></url>`,
+		`  <url><loc>${SITE_URL}/status</loc></url>`,
 		...projects.map(
 			(p) =>
 				`  <url><loc>${SITE_URL}/projects/${p.slug}</loc>` +

@@ -32,6 +32,28 @@ export interface ProjectCard {
 	updated_at: string; // ISO-датавремя
 }
 
+// Ответ uptime-чекера (uptime/internal/api/api.go)
+export interface MonitorStatus {
+	slug: string;
+	name: string;
+	url: string;
+	status: 'up' | 'down' | 'unknown';
+	since: string;
+	uptime_24h: number | null;
+	uptime_7d: number | null;
+	uptime_30d: number | null;
+	median_latency_ms_24h: number | null;
+	last_check: {
+		at: string;
+		ok: boolean;
+		http_status: number;
+		latency_ms: number;
+		error?: string;
+	} | null;
+	tls_days_left: number | null;
+	tls_not_after: string | null;
+}
+
 export interface ProjectDetail extends ProjectCard {
 	id: number;
 	description_md: string;

@@ -30,7 +30,7 @@ export const typeLabels: Record<ProjectType, string> = {
 };
 
 export const statusLabels: Record<ProjectStatus, string> = {
-	active: 'живой',
+	active: 'завершён',
 	wip: 'в разработке',
 	archived: 'архив'
 };

@@ -35,7 +35,7 @@
 			{/each}
 		</div>
 		<p class="colophon">
-			Сайт — тоже проект: <a href="https://github.com/Manshooo/manshoo.ru">исходники на GitHub</a>
+			<a href="https://github.com/Manshooo/manshoo.ru">исходники на GitHub</a>
 		</p>
 	</footer>
 </div>
@@ -45,6 +45,7 @@
 		display: flex;
 		flex-direction: column;
 		min-height: 100dvh;
+		gap: 20px;
 	}
 	.container {
 		width: 100%;

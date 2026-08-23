@@ -2,7 +2,7 @@
 
 Собственный сервис на Go ([ADR-005](decisions/ADR-005-uptime-go.md)): мониторинг личных проектов + полигон для изучения Go + будущий кейс в портфолио.
 
-**Мониторы:** `azzb.ru` и `manshoo.ru` (оба включены в `uptime/config.yaml`; деплоятся одной волной с сайтом). Прод: контейнер из ghcr, конфиг и `.env` (Telegram) — в `/var/www/manshoo/uptime/`, редеплой — push в main или `docker compose -f docker-compose.prod.yml up -d uptime` на VPS.
+**Мониторы:** `azzb.ru`, `manshoo.ru` и `technary.net` (все включены в `uptime/config.yaml`; деплоятся одной волной с сайтом). Прод: контейнер из ghcr, конфиг и `.env` (Telegram) — в `/var/www/manshoo/uptime/`, редеплой — push в main или `docker compose -f docker-compose.prod.yml up -d uptime` на VPS.
 
 ## Функциональность v1
 
@@ -30,9 +30,14 @@ monitors:
     name: azzb.ru
     url: https://azzb.ru
     expect_status: 200
-  # - slug: manshoo        # добавить после деплоя сайта (Phase 2)
-  #   name: manshoo.ru
-  #   url: https://manshoo.ru
+  - slug: manshoo
+    name: manshoo.ru
+    url: https://manshoo.ru
+    expect_status: 200
+  - slug: technary
+    name: technary.net
+    url: https://technary.net
+    expect_status: 200
 ```
 
 ## Структура Go-проекта

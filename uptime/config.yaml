@@ -15,3 +15,7 @@ monitors:
     name: manshoo.ru
     url: https://manshoo.ru
     expect_status: 200
+  - slug: technary
+    name: technary.net
+    url: https://technary.net
+    expect_status: 200

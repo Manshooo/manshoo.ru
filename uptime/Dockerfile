@@ -1,5 +1,5 @@
 # dev: hot-reload через air + volume-mount кода (см. docker-compose.yml)
-FROM golang:1.26-alpine AS dev
+FROM golang:1.27-alpine AS dev
 WORKDIR /app
 RUN go install github.com/air-verse/air@latest
 COPY go.mod go.sum ./
@@ -8,7 +8,7 @@ COPY . .
 EXPOSE 8080
 CMD ["air"]
 
-FROM golang:1.26-alpine AS build
+FROM golang:1.27-alpine AS build
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download

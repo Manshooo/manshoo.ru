@@ -21,5 +21,8 @@ jobs:
             https://manshoo.ru/
             https://manshoo.ru/status
           budgetPath: .github/lighthouse-budget.json
+          # Раннер GitHub — общая машина, TBT на одном прогоне гуляет втрое.
+          # Три прогона, бюджет сверяется с медианой.
+          runs: 3
           uploadArtifacts: true
           temporaryPublicStorage: true

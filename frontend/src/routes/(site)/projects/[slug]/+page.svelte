@@ -4,7 +4,6 @@
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import { formatPeriod, statusLabels, typeLabels } from '$lib/format';
 	import { breadcrumbsJsonLd, projectJsonLd } from '$lib/jsonld';
-	import { renderMarkdown } from '$lib/markdown';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -87,9 +86,9 @@
 		{/if}
 	</header>
 
-	{#if p.description_md}
+	{#if data.descriptionHtml}
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -- контент пишет владелец сайта -->
-		<div class="body">{@html renderMarkdown(p.description_md)}</div>
+		<div class="body">{@html data.descriptionHtml}</div>
 	{/if}
 
 	{#if p.highlights.length}

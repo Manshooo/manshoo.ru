@@ -4,7 +4,6 @@
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
 	import { formatPeriod, statusLabels, typeLabels } from '$lib/format';
 	import { personJsonLd, webSiteJsonLd } from '$lib/jsonld';
-	import { renderMarkdown } from '$lib/markdown';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -24,7 +23,7 @@
 	<h1>{profile.name}</h1>
 	<p class="headline">{profile.headline}</p>
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -- контент пишет владелец сайта -->
-	<div class="bio">{@html renderMarkdown(profile.bio_md)}</div>
+	<div class="bio">{@html data.bioHtml}</div>
 	{#if profile.skills.length}
 		<ul class="chips" aria-label="Навыки">
 			{#each profile.skills as skill (skill)}

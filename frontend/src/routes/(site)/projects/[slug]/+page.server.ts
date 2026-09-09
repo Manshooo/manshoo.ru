@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/public';
+import { renderMarkdown } from '$lib/markdown';
 import { getProject } from '$lib/server/api';
 import { getMonitorMap } from '$lib/server/uptime';
 import type { PageServerLoad } from './$types';
@@ -18,6 +19,8 @@ export const load: PageServerLoad = async ({ fetch, params, url, request }) => {
 	return {
 		preview,
 		project,
+		// см. (site)/+page.server.ts: marked не должен попадать в клиентский бандл
+		descriptionHtml: project.description_md ? renderMarkdown(project.description_md) : '',
 		monitor: monitors[project.uptime_monitor_slug] ?? null,
 		// у черновика публичной картинки ещё нет
 		ogImage: project.is_published

@@ -65,7 +65,8 @@ export function projectJsonLd(project: ProjectDetail, profile: Profile): Json {
 		if (isCode) work.programmingLanguage = project.stack;
 	}
 	if (isCode) work.codeRepository = project.links.repo;
-	if (project.cover_url) work.image = project.cover_url;
+	const images = [project.cover_url, ...project.images.map((i) => i.url)].filter(Boolean);
+	if (images.length) work.image = images;
 	if (profile.name) work.creator = { '@id': `${SITE_URL}/#person` };
 	return work;
 }

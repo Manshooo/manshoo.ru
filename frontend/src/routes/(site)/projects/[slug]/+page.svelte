@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Gallery from '$lib/components/Gallery.svelte';
 	import JsonLd from '$lib/components/JsonLd.svelte';
 	import Seo from '$lib/components/Seo.svelte';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
@@ -86,9 +87,18 @@
 		{/if}
 	</header>
 
+	{#if p.cover_url}
+		<img class="cover" src={p.cover_url} alt={`${p.title}: обложка`} fetchpriority="high" />
+	{/if}
+
 	{#if data.descriptionHtml}
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -- контент пишет владелец сайта -->
 		<div class="body">{@html data.descriptionHtml}</div>
+	{/if}
+
+	{#if p.images.length}
+		<h2>Галерея</h2>
+		<Gallery images={p.images} title={p.title} />
 	{/if}
 
 	{#if p.highlights.length}
@@ -166,6 +176,18 @@
 		border-radius: 999px;
 		padding: 0.15rem 0.7rem;
 		font-size: 0.85rem;
+	}
+
+	.cover {
+		display: block;
+		width: 100%;
+		height: auto;
+		aspect-ratio: 16 / 9;
+		object-fit: cover;
+		margin-top: 1.5rem;
+		border-radius: 12px;
+		border: 1px solid var(--border);
+		background: var(--card);
 	}
 
 	.body {

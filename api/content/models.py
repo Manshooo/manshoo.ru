@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 
 class Profile(models.Model):
@@ -81,3 +83,42 @@ class Project(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+
+class ProjectImage(models.Model):
+    """Кадр галереи проекта: скриншот, фото, схема. Хранится в двух размерах —
+    превью для сетки на странице и полный кадр для просмотра по клику."""
+
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="images", verbose_name="проект"
+    )
+    image = models.ImageField(
+        "изображение", upload_to="gallery/", width_field="width", height_field="height"
+    )
+    thumb = models.ImageField("превью", upload_to="gallery/thumbs/")
+    width = models.PositiveIntegerField("ширина", default=0, editable=False)
+    height = models.PositiveIntegerField("высота", default=0, editable=False)
+    caption = models.CharField("подпись", max_length=200, blank=True)
+    sort_order = models.IntegerField("порядок", default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "кадр галереи"
+        verbose_name_plural = "галерея"
+        ordering = ["sort_order", "id"]
+
+    def __str__(self) -> str:
+        return self.caption or self.image.name
+
+
+# Файлы убираем сигналом, а не в эндпоинтах: post_delete срабатывает и при
+# каскадном удалении проекта, так что загрузки не остаются мусором в media.
+@receiver(post_delete, sender=Project)
+def delete_cover_file(sender, instance: Project, **kwargs) -> None:
+    instance.cover.delete(save=False)
+
+
+@receiver(post_delete, sender=ProjectImage)
+def delete_gallery_files(sender, instance: ProjectImage, **kwargs) -> None:
+    instance.image.delete(save=False)
+    instance.thumb.delete(save=False)

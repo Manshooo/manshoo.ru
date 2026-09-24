@@ -1,11 +1,12 @@
 import io
+from pathlib import Path
 
 import pytest
 from django.contrib.auth.models import User
 from django.test import Client
 from PIL import Image
 
-from content.models import Project
+from content.models import Project, ProjectImage
 
 pytestmark = pytest.mark.django_db
 
@@ -190,6 +191,137 @@ def test_cover_rejects_non_image(auth_client: Client) -> None:
     fake.name = "shell.png"
     response = auth_client.post(f"/api/admin/projects/{project['id']}/cover", data={"file": fake})
     assert response.status_code == 400
+
+
+def image_file(size=(2400, 1200), name="shot.png") -> io.BytesIO:
+    buffer = io.BytesIO()
+    Image.new("RGB", size, "navy").save(buffer, format="PNG")
+    buffer.seek(0)
+    buffer.name = name
+    return buffer
+
+
+def create_project(client: Client, **overrides) -> dict:
+    return client.post(
+        "/api/admin/projects", data=project_payload(**overrides), content_type="application/json"
+    ).json()
+
+
+def test_cover_reupload_changes_url(auth_client: Client) -> None:
+    """nginx кэширует медиа на неделю: новая обложка обязана жить по новому адресу."""
+    project = create_project(auth_client)
+    url = f"/api/admin/projects/{project['id']}/cover"
+
+    first = auth_client.post(url, data={"file": image_file()}).json()["cover_url"]
+    old_path = Project.objects.get(pk=project["id"]).cover.path
+    second = auth_client.post(url, data={"file": image_file()}).json()["cover_url"]
+
+    assert first != second
+    assert not Path(old_path).exists()  # старый файл убран, а не брошен мусором
+
+
+def test_media_urls_use_public_api_url(auth_client: Client, settings) -> None:
+    """SSR ходит в api по docker-сети: ссылка на картинку не должна вести на api:8000."""
+    settings.PUBLIC_API_URL = "https://api.example.com"
+    settings.ALLOWED_HOSTS = ["api", "testserver"]  # как в проде: api — внутренний хост
+    project = create_project(auth_client, is_published=True)
+    auth_client.post(f"/api/admin/projects/{project['id']}/cover", data={"file": image_file()})
+    auth_client.post(f"/api/admin/projects/{project['id']}/images", data={"file": image_file()})
+
+    ssr = Client(headers={"host": "api:8000"})
+    detail = ssr.get(f"/api/projects/{project['slug']}").json()
+    card = ssr.get("/api/projects").json()
+    assert detail["cover_url"].startswith("https://api.example.com/media/covers/")
+    assert detail["images"][0]["url"].startswith("https://api.example.com/media/gallery/")
+    assert any(c["cover_url"] == detail["cover_url"] for c in card)
+
+
+def test_gallery_upload(auth_client: Client) -> None:
+    project = create_project(auth_client, is_published=True)
+    url = f"/api/admin/projects/{project['id']}/images"
+
+    first = auth_client.post(url, data={"file": image_file((2400, 1200))})
+    assert first.status_code == 201, first.content
+    image = first.json()
+    assert image["url"].endswith(".webp")
+    assert image["thumb_url"].endswith(".webp")
+    assert (image["width"], image["height"]) == (1600, 800)  # ужат, пропорции сохранены
+
+    saved = ProjectImage.objects.get(pk=image["id"])
+    with Image.open(saved.thumb.path) as thumb:
+        assert thumb.format == "WEBP"
+        assert max(thumb.size) <= 640
+
+    second = auth_client.post(url, data={"file": image_file((800, 1000))}).json()
+    # новые кадры встают в конец, публичная страница видит галерею в том же порядке
+    public = auth_client.get(f"/api/projects/{project['slug']}").json()
+    assert [i["id"] for i in public["images"]] == [image["id"], second["id"]]
+
+
+def test_gallery_rejects_non_image(auth_client: Client) -> None:
+    project = create_project(auth_client)
+    fake = io.BytesIO(b"<?php echo 'not an image'; ?>")
+    fake.name = "shell.png"
+    response = auth_client.post(f"/api/admin/projects/{project['id']}/images", data={"file": fake})
+    assert response.status_code == 400
+    assert not ProjectImage.objects.exists()
+
+
+def test_gallery_requires_auth(client: Client) -> None:
+    project = Project.objects.get(slug="manshoo-ru")
+    response = client.post(f"/api/admin/projects/{project.pk}/images", data={"file": image_file()})
+    assert response.status_code == 401
+
+
+def test_gallery_caption_and_order(auth_client: Client) -> None:
+    project = create_project(auth_client)
+    base = f"/api/admin/projects/{project['id']}/images"
+    ids = [auth_client.post(base, data={"file": image_file()}).json()["id"] for _ in range(3)]
+
+    caption = auth_client.put(
+        f"{base}/{ids[1]}", data={"caption": "  Экран входа "}, content_type="application/json"
+    )
+    assert caption.json()["caption"] == "Экран входа"
+
+    reordered = auth_client.put(
+        f"{base}/order", data={"ids": ids[::-1]}, content_type="application/json"
+    )
+    assert [i["id"] for i in reordered.json()] == ids[::-1]
+    detail = auth_client.get(f"/api/admin/projects/{project['id']}").json()
+    assert [i["id"] for i in detail["images"]] == ids[::-1]
+
+    # неполный список — значит, галерею правили в другой вкладке
+    stale = auth_client.put(f"{base}/order", data={"ids": ids[:2]}, content_type="application/json")
+    assert stale.status_code == 409
+
+
+def test_gallery_image_belongs_to_project(auth_client: Client) -> None:
+    owner_project = create_project(auth_client)
+    other = create_project(auth_client, title="Другой")
+    image = auth_client.post(
+        f"/api/admin/projects/{owner_project['id']}/images", data={"file": image_file()}
+    ).json()
+    response = auth_client.delete(f"/api/admin/projects/{other['id']}/images/{image['id']}")
+    assert response.status_code == 404
+
+
+def test_gallery_files_removed_with_image_and_project(auth_client: Client) -> None:
+    project = create_project(auth_client)
+    base = f"/api/admin/projects/{project['id']}/images"
+    first = auth_client.post(base, data={"file": image_file()}).json()
+    auth_client.post(base, data={"file": image_file()})
+    auth_client.post(f"/api/admin/projects/{project['id']}/cover", data={"file": image_file()})
+
+    saved = ProjectImage.objects.get(pk=first["id"])
+    paths = [Path(saved.image.path), Path(saved.thumb.path)]
+    assert auth_client.delete(f"{base}/{first['id']}").status_code == 204
+    assert not any(p.exists() for p in paths)
+
+    # удаление проекта каскадом забирает оставшиеся кадры и обложку
+    leftovers = [Path(f.path) for i in ProjectImage.objects.all() for f in (i.image, i.thumb)]
+    leftovers.append(Path(Project.objects.get(pk=project["id"]).cover.path))
+    assert auth_client.delete(f"/api/admin/projects/{project['id']}").status_code == 204
+    assert not any(p.exists() for p in leftovers)
 
 
 def test_profile_update(auth_client: Client) -> None:

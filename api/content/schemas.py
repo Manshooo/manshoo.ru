@@ -1,9 +1,24 @@
 from datetime import date, datetime
 
+from django.conf import settings
+from django.db.models.fields.files import FieldFile
 from django.http import HttpRequest
-from ninja import Schema
+from ninja import Field, Schema
 
-from .models import Profile, Project
+from .models import Profile, Project, ProjectImage
+
+
+def media_url(file: FieldFile, request: HttpRequest) -> str | None:
+    """Абсолютная ссылка на загрузку — такая, что откроется в браузере.
+
+    Хост запроса годится не всегда: SSR спрашивает api по внутреннему
+    адресу, поэтому основой служит публичный адрес из настроек.
+    """
+    if not file:
+        return None
+    if settings.PUBLIC_API_URL:
+        return f"{settings.PUBLIC_API_URL}{file.url}"
+    return request.build_absolute_uri(file.url)
 
 
 class ProfileOut(Schema):
@@ -18,10 +33,7 @@ class ProfileOut(Schema):
 
     @staticmethod
     def resolve_photo_url(obj: Profile, context) -> str | None:
-        if not obj.photo:
-            return None
-        request: HttpRequest = context["request"]
-        return request.build_absolute_uri(obj.photo.url)
+        return media_url(obj.photo, context["request"])
 
 
 class ProfileIn(Schema):
@@ -52,10 +64,24 @@ class ProjectCardOut(Schema):
 
     @staticmethod
     def resolve_cover_url(obj: Project, context) -> str | None:
-        if not obj.cover:
-            return None
-        request: HttpRequest = context["request"]
-        return request.build_absolute_uri(obj.cover.url)
+        return media_url(obj.cover, context["request"])
+
+
+class ProjectImageOut(Schema):
+    id: int
+    url: str
+    thumb_url: str
+    width: int
+    height: int
+    caption: str
+
+    @staticmethod
+    def resolve_url(obj: ProjectImage, context) -> str | None:
+        return media_url(obj.image, context["request"])
+
+    @staticmethod
+    def resolve_thumb_url(obj: ProjectImage, context) -> str | None:
+        return media_url(obj.thumb, context["request"])
 
 
 class ProjectDetailOut(ProjectCardOut):
@@ -65,6 +91,7 @@ class ProjectDetailOut(ProjectCardOut):
     links: dict[str, str]
     is_published: bool
     sort_order: int
+    images: list[ProjectImageOut]
 
 
 class ProjectIn(Schema):
@@ -87,3 +114,13 @@ class ProjectIn(Schema):
     is_featured: bool = False
     sort_order: int = 0
     uptime_monitor_slug: str = ""
+
+
+class ProjectImageIn(Schema):
+    caption: str = Field("", max_length=200)
+
+
+class ImageOrderIn(Schema):
+    """Галерея целиком, id кадров в нужном порядке."""
+
+    ids: list[int]

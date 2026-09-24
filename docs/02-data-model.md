@@ -20,7 +20,7 @@
 | `stack` | JSONB: `["Go", "PostgreSQL"]` | Теги стека; фильтрация через `__contains` |
 | `highlights` | JSONB: `[str]` | «Ключевые фишки» — 3–7 буллетов: чем горжусь, цифры, сложности |
 | `links` | JSONB: `{live, repo, case}` | Ссылки: продакшен, репозиторий, статья/кейс |
-| `cover` | image, null | Обложка карточки |
+| `cover` | image, null | Обложка карточки и шапки страницы проекта (на сайте кадрируется в 16:9) |
 | `status` | choice | `active` / `wip` / `archived` — бейдж на карточке |
 | `is_published` | bool, default False | Черновики не видны публично |
 | `is_featured` | bool | Закреплён вверху главной |
@@ -29,6 +29,21 @@
 | `created_at` / `updated_at` | auto | Служебные; `updated_at` идёт в sitemap `lastmod` |
 
 Индексы: `slug` (unique), `(is_published, sort_order)`. Отдельная таблица тегов не нужна на этом масштабе — если понадобится страница «все проекты на Go», JSONB-фильтра достаточно ([ADR-004](decisions/ADR-004-database-postgres.md)).
+
+## ProjectImage — кадр галереи проекта
+
+Скриншоты, фото, схемы. На странице проекта — сетка превью, по клику кадр открывается целиком (лайтбокс).
+
+| Поле | Тип | Назначение |
+|---|---|---|
+| `project` | FK → Project, CASCADE | `related_name="images"` |
+| `image` | image | Полный кадр, WebP ≤1600 px |
+| `thumb` | image | Превью для сетки, WebP ≤640 px |
+| `width` / `height` | int | Размеры полного кадра (заполняет `ImageField`) — резервируют место в лайтбоксе |
+| `caption` | char(200), blank | Подпись |
+| `sort_order` | int | Порядок; новый кадр встаёт в конец |
+
+Файлы кадров и обложки удаляет сигнал `post_delete` — в том числе при каскадном удалении проекта.
 
 ## Profile — singleton «обо мне»
 
@@ -68,8 +83,14 @@ POST   /api/admin/projects
 PUT    /api/admin/projects/{id}
 DELETE /api/admin/projects/{id}
 POST   /api/admin/projects/{id}/cover   (multipart upload)
+POST   /api/admin/projects/{id}/images  (multipart, один файл за запрос) → ProjectImage
+PUT    /api/admin/projects/{id}/images/order        {ids: [...]} — галерея целиком, иначе 409
+PUT    /api/admin/projects/{id}/images/{image_id}   {caption}
+DELETE /api/admin/projects/{id}/images/{image_id}
 PUT    /api/admin/profile
 ```
+
+Ссылки на загрузки (`cover_url`, `images[].url`, `photo_url`) абсолютные и строятся от `PUBLIC_API_URL` (в проде — `https://api.manshoo.ru`). Хост запроса для этого не годится: SSR спрашивает api по docker-сети, и ссылка вышла бы `http://api:8000/media/…`, которую браузер не откроет. Имя файла получает случайный хвост — заменённая картинка живёт по новому адресу, и кэш nginx (`expires 7d`) не показывает старую.
 
 ### Внутреннее (для SSR)
 

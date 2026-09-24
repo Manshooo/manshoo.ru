@@ -1,4 +1,5 @@
 <script lang="ts">
+	import GalleryEditor from '$lib/admin/GalleryEditor.svelte';
 	import ListInput from '$lib/admin/ListInput.svelte';
 	import { api, ApiError } from '$lib/admin/client';
 	import { renderMarkdown } from '$lib/markdown';
@@ -222,6 +223,10 @@
 
 		<div class="cover">
 			<span class="cover-label">Обложка</span>
+			<p class="muted">
+				Картинка карточки на главной и шапки страницы проекта. На сайте обрезается до 16:9 — лучше
+				сразу горизонтальная, от 1200 px по ширине.
+			</p>
 			{#if !project}
 				<p class="muted">Сохраните проект — потом можно будет загрузить обложку.</p>
 			{:else}
@@ -237,6 +242,15 @@
 				{#if uploading}<p class="muted">Загружаем…</p>{/if}
 			{/if}
 		</div>
+	</section>
+
+	<section>
+		<h2>Галерея</h2>
+		{#if project}
+			<GalleryEditor projectId={project.id} images={project.images ?? []} />
+		{:else}
+			<p class="muted">Сохраните проект — потом можно будет добавить скриншоты и фото.</p>
+		{/if}
 	</section>
 
 	<section>

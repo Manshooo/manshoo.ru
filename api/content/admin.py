@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Profile, Project
+from .models import Profile, Project, ProjectImage
 
 
 @admin.register(Profile)
@@ -13,8 +13,22 @@ class ProfileAdmin(admin.ModelAdmin):
         return False
 
 
+class ProjectImageInline(admin.TabularInline):
+    """Подписи, порядок и удаление кадров. Загружать — через свою админку:
+    там файл пересохраняется в WebP и получает превью."""
+
+    model = ProjectImage
+    extra = 0
+    fields = ("thumb", "caption", "sort_order")
+    readonly_fields = ("thumb",)
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
+    inlines = (ProjectImageInline,)
     list_display = (
         "title",
         "slug",

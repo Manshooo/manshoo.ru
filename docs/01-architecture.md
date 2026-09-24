@@ -36,7 +36,7 @@ flowchart LR
 | `uptime` | Go, SQLite | Проверки сайтов, Telegram-алерты, JSON API статусов | **нет** (только docker-сеть/localhost) |
 | `postgres` | PostgreSQL 17 | Данные api | нет |
 
-Статику Django (админка) отдаёт **whitenoise** из образа (collectstatic на этапе сборки) — nginx не лазит в контейнер. Медиа-загрузки — bind-mount `/var/www/manshoo/media` ↔ `/app/media`, наружу их отдаёт nginx (`api.manshoo.ru/media/`).
+Статику Django (админка) отдаёт **whitenoise** из образа (collectstatic на этапе сборки) — nginx не лазит в контейнер. Медиа-загрузки — bind-mount `/var/www/manshoo/media` ↔ `/app/media`, наружу их отдаёт nginx (`api.manshoo.ru/media/`). Ссылки на них api строит от `PUBLIC_API_URL` (задан в `docker-compose.prod.yml`), а не от хоста запроса: SSR ходит в api по docker-сети.
 
 ## Маршрутизация
 

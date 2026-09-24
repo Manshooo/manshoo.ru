@@ -31,6 +31,7 @@ services:
       - ./api:/app
     environment:
       DEBUG: "1"
+      PUBLIC_API_URL: http://localhost:8000 # ссылки на media, которые откроет браузер
       POSTGRES_HOST: postgres
       POSTGRES_PORT: "5432"
       POSTGRES_DB: manshoo

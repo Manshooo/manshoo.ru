@@ -148,6 +148,11 @@ MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 FILE_UPLOAD_PERMISSIONS = 0o644  # чтобы nginx мог читать загрузки из bind-mount
 
+# Ссылки на загрузки строим от публичного адреса api. SSR ходит в api по
+# docker-сети, и build_absolute_uri дал бы http://api:8000/media/… — такую
+# ссылку браузер не откроет. Пусто (тесты, запуск без docker) — хост запроса.
+PUBLIC_API_URL = os.environ.get("PUBLIC_API_URL", "").rstrip("/")
+
 # За nginx: доверяем X-Forwarded-Proto, чтобы build_absolute_uri давал https
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 

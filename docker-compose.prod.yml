@@ -34,6 +34,9 @@ services:
     restart: unless-stopped
     env_file:
       - ./api/.env
+    environment:
+      # ссылки на media: SSR спрашивает api по docker-сети, а картинки открывает браузер
+      PUBLIC_API_URL: https://api.manshoo.ru
     volumes:
       - ./media:/app/media
     ports:

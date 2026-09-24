@@ -10,10 +10,13 @@ const PUBLIC_API = env.PUBLIC_API_URL ?? 'https://api.manshoo.ru';
 
 export const load: PageServerLoad = async ({ fetch, params, url, request }) => {
 	const preview = url.searchParams.get('preview') === '1';
-	const project = await getProject(fetch, params.slug, {
+	const fetched = await getProject(fetch, params.slug, {
 		preview,
 		cookie: preview ? (request.headers.get('cookie') ?? undefined) : undefined
 	});
+	// frontend и api выкатываются независимо: пока api старый, галереи в
+	// ответе нет — страница не должна из-за этого падать
+	const project = { ...fetched, images: fetched.images ?? [] };
 
 	const monitors = project.uptime_monitor_slug ? await getMonitorMap(fetch) : {};
 	return {

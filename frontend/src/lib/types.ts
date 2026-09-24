@@ -54,6 +54,16 @@ export interface MonitorStatus {
 	tls_not_after: string | null;
 }
 
+// Кадр галереи: превью для сетки, полный размер — для просмотра по клику
+export interface ProjectImage {
+	id: number;
+	url: string;
+	thumb_url: string;
+	width: number;
+	height: number;
+	caption: string;
+}
+
 export interface ProjectDetail extends ProjectCard {
 	id: number;
 	description_md: string;
@@ -61,4 +71,5 @@ export interface ProjectDetail extends ProjectCard {
 	links: Record<string, string>;
 	is_published: boolean;
 	sort_order: number;
+	images: ProjectImage[];
 }

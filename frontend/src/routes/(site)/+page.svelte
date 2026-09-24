@@ -38,8 +38,18 @@
 	<p class="note">Ознакомьтесь с моими проектами!</p>
 	{#if projects.length}
 		<div class="grid">
-			{#each projects as p (p.slug)}
+			{#each projects as p, i (p.slug)}
 				<a class="card" href={`/projects/${p.slug}`}>
+					{#if p.cover_url}
+						<!-- первая обложка может оказаться LCP-элементом — её не откладываем -->
+						<img
+							class="cover"
+							src={p.cover_url}
+							alt=""
+							loading={i === 0 ? 'eager' : 'lazy'}
+							decoding="async"
+						/>
+					{/if}
 					<div class="card-head">
 						<h3>{p.title}</h3>
 						{#if data.monitors[p.uptime_monitor_slug]}
@@ -120,6 +130,17 @@
 		border-radius: 12px;
 		padding: 1rem 1.25rem;
 		color: inherit;
+		overflow: hidden;
+	}
+	.cover {
+		display: block;
+		width: calc(100% + 2.5rem);
+		max-width: none;
+		height: auto;
+		aspect-ratio: 16 / 9;
+		object-fit: cover;
+		margin: -1rem -1.25rem 0.9rem;
+		border-bottom: 1px solid var(--border);
 	}
 	.card:hover {
 		text-decoration: none;

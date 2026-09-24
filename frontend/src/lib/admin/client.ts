@@ -1,7 +1,7 @@
 // Клиент админки: браузер ходит на api.manshoo.ru напрямую (cross-origin,
 // но same-site), поэтому нужны credentials и X-CSRFToken.
 import { env } from '$env/dynamic/public';
-import type { Profile, ProjectDetail } from '$lib/types';
+import type { Profile, ProjectDetail, ProjectImage } from '$lib/types';
 
 const BASE = env.PUBLIC_API_URL ?? 'http://localhost:8000';
 
@@ -84,6 +84,24 @@ export const api = {
 	},
 	deleteCover: (id: number) =>
 		request<ProjectDetail>(`/api/admin/projects/${id}/cover`, { method: 'DELETE' }),
+
+	async uploadImage(projectId: number, file: File) {
+		const form = new FormData();
+		form.append('file', file);
+		return request<ProjectImage>(`/api/admin/projects/${projectId}/images`, {
+			method: 'POST',
+			body: form
+		});
+	},
+	updateImage: (projectId: number, imageId: number, caption: string) =>
+		request<ProjectImage>(
+			`/api/admin/projects/${projectId}/images/${imageId}`,
+			json('PUT', { caption })
+		),
+	reorderImages: (projectId: number, ids: number[]) =>
+		request<ProjectImage[]>(`/api/admin/projects/${projectId}/images/order`, json('PUT', { ids })),
+	deleteImage: (projectId: number, imageId: number) =>
+		request<null>(`/api/admin/projects/${projectId}/images/${imageId}`, { method: 'DELETE' }),
 
 	getProfile: () => request<Profile>('/api/profile'),
 	updateProfile: (data: unknown) => request<Profile>('/api/admin/profile', json('PUT', data))

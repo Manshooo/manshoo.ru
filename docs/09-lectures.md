@@ -28,7 +28,7 @@ Google-Extended…) берут текст из HTML, отдаваемого се
 ## Как устроено
 
 ```
-видео ──tools/lectures/transcribe.py──▶ <slug>.draft.md + кадры
+видео ──transcriber -f lecture──▶ <имя>.draft.md + кадры
                          (скилл lecture-notes или руками)
 draft ──────────────────────────────▶ <NN-slug>.md
 .md ──/admin/lectures (загрузка)──▶ api: разбор шапки, Course/Lecture в Postgres
@@ -98,27 +98,28 @@ api ──SSR──▶ /lectures/<курс>/<лекция>  (+ .md, dataset.json
 
 ## Конвейер: видео → черновик
 
-```bash
-py -3.12 -m venv tools/lectures/.venv            # на Python 3.14 у pip бывают проблемы
-tools/lectures/.venv/Scripts/pip install -r tools/lectures/requirements-gpu.txt   # без GPU — requirements.txt
-tools/lectures/.venv/Scripts/python tools/lectures/transcribe.py https://vk.com/video-… --slug 03-gruppy --title "Лекция 3. Группы"
+Распознавание — отдельный проект **transcriber** (`My Projects/transcriber`, свой README):
+faster-whisper на GPU, GigaAM для русской речи, словарь терминов, пакетный режим, cookies для
+закрытых видео. В этом репозитории от конвейера остались только формат и промпт скилла.
+
+```powershell
+transcriber https://vk.com/video-… -f lecture json srt --frames --hotwords-file algebra.txt
 ```
 
-Нужен FFmpeg в PATH. `requirements-gpu.txt` добавляет cuBLAS и cuDNN (~1 ГБ) для видеокарт NVIDIA;
-скрипт сам подключает их DLL. Без них в режиме `--device auto` он считает на CPU.
+| Файл | Что |
+|---|---|
+| `<имя>.draft.md` | Черновик: шапка (ссылка, название и длительность видео заполнены), абзацы `[ЧЧ:ММ:СС]`, метки кадров |
+| `<имя>.json` | Сегменты и кадры; `transcriber <имя>.json -f lecture` пересобирает черновик без распознавания |
+| `<имя>.srt` | Субтитры — стоит загрузить к самому видео |
+| `<имя>.frames/` | Кадры при смене слайда (`--frames`, для ссылки качает видео 720p; нужен FFmpeg) |
 
-Результат в `tools/lectures/work/<slug>/` (в git не идёт): `<slug>.draft.md`, `transcript.srt`
-(субтитры — стоит загрузить к самому видео), `segments.json`, `frames/` + `frames.json`.
-Модель по умолчанию `large-v3-turbo`. На CPU это примерно реальное время лекции и дольше,
-на GPU (`--device cuda`) — в разы быстрее; `--model tiny` — для проверки, что всё работает.
-Повторно собрать черновик без распознавания: `--segments work/<slug>/segments.json`.
+Словарь терминов (`--hotwords-file`, по термину на строку) для лекций особенно полезен: имена
+учёных и термины курса модель иначе пишет как попало. Модель — `large-v3-turbo` по умолчанию;
+для русской речи стоит сравнить с `-m gigaam-v3-rnnt`.
 
 Черновик специально не проходит проверку api: пустые `date`, `summary`, `permission`. Дальше —
 скилл `lecture-notes` (промпт для его создания: [tools/lectures/SKILL_PROMPT.md](../tools/lectures/SKILL_PROMPT.md))
-или ручная редактура.
-
-Распознавание — только Whisper. Для русского сильнее может оказаться GigaAM (Сбер), но его
-API менялся, в скрипт он не встроен. Если понадобится — отдельный движок в `transcribe()`.
+или ручная редактура. Перед загрузкой файл переименовывают в `NN-slug.md`.
 
 ## Что дальше (не сделано)
 

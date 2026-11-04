@@ -38,6 +38,3 @@ Thumbs.db
 
 # --- Claude Code (локальные настройки) ---
 .claude/settings.local.json
-
-# --- tools/lectures: видео, кадры, черновики ---
-tools/lectures/work/

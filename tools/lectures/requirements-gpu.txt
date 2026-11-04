@@ -1,5 +1,0 @@
-# Распознавание на видеокарте NVIDIA: cuBLAS и cuDNN для ctranslate2 (~1 ГБ).
-# Ставить поверх requirements.txt; transcribe.py сам подключит DLL из этих пакетов.
--r requirements.txt
-nvidia-cublas-cu12
-nvidia-cudnn-cu12==9.*

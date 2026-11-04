@@ -1,9 +1,14 @@
 import { getProjects } from '$lib/server/api';
+import { getCatalog } from '$lib/server/lectures';
 import { SITE_URL } from '$lib/seo';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ fetch }) => {
-	const projects = await getProjects(fetch);
+	// без лекций sitemap всё равно нужен: проекты важнее
+	const [projects, catalog] = await Promise.all([
+		getProjects(fetch),
+		getCatalog(fetch).catch(() => [])
+	]);
 
 	const urls = [
 		`  <url><loc>${SITE_URL}/</loc></url>`,
@@ -12,7 +17,15 @@ export const GET: RequestHandler = async ({ fetch }) => {
 			(p) =>
 				`  <url><loc>${SITE_URL}/projects/${p.slug}</loc>` +
 				`<lastmod>${p.updated_at.slice(0, 10)}</lastmod></url>`
-		)
+		),
+		...(catalog.length ? [`  <url><loc>${SITE_URL}/lectures</loc></url>`] : []),
+		...catalog.flatMap((c) => [
+			`  <url><loc>${SITE_URL}/lectures/${c.slug}</loc></url>`,
+			...c.lectures.map(
+				(l) =>
+					`  <url><loc>${SITE_URL}/lectures/${c.slug}/${l.slug}</loc><lastmod>${l.updated}</lastmod></url>`
+			)
+		])
 	].join('\n');
 
 	const xml =

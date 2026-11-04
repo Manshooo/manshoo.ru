@@ -1,4 +1,4 @@
-import type { ProjectStatus, ProjectType } from './types';
+import type { LectureKind, LectureQuality, ProjectStatus, ProjectType } from './types';
 
 const monthYear = new Intl.DateTimeFormat('ru', { month: 'short', year: 'numeric' });
 
@@ -33,4 +33,29 @@ export const statusLabels: Record<ProjectStatus, string> = {
 	active: 'завершён',
 	wip: 'в разработке',
 	archived: 'архив'
+};
+
+const longDate = new Intl.DateTimeFormat('ru', {
+	day: 'numeric',
+	month: 'long',
+	year: 'numeric',
+	timeZone: 'UTC'
+});
+
+/** «17 сентября 2025 г.»; дата из шапки — ГГГГ-ММ-ДД без времени, поэтому UTC. */
+export function formatDate(iso: string): string {
+	return longDate.format(new Date(`${iso}T00:00:00Z`));
+}
+
+// Подписи живут здесь, а не в $lib/lectures: тот тянет парсер YAML,
+// которому нечего делать в клиентском бандле.
+export const kindLabels: Record<LectureKind, string> = {
+	transcript: 'Транскрипция',
+	notes: 'Конспект'
+};
+
+export const qualityLabels: Record<LectureQuality, string> = {
+	asr: 'автоматическое распознавание, не вычитано',
+	edited: 'отредактировано',
+	verified: 'вычитано по видео'
 };

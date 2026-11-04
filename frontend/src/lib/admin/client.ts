@@ -1,7 +1,7 @@
 // Клиент админки: браузер ходит на api.manshoo.ru напрямую (cross-origin,
 // но same-site), поэтому нужны credentials и X-CSRFToken.
 import { env } from '$env/dynamic/public';
-import type { Profile, ProjectDetail, ProjectImage } from '$lib/types';
+import type { Course, LectureCard, Profile, ProjectDetail, ProjectImage } from '$lib/types';
 
 const BASE = env.PUBLIC_API_URL ?? 'http://localhost:8000';
 
@@ -102,6 +102,24 @@ export const api = {
 		request<ProjectImage[]>(`/api/admin/projects/${projectId}/images/order`, json('PUT', { ids })),
 	deleteImage: (projectId: number, imageId: number) =>
 		request<null>(`/api/admin/projects/${projectId}/images/${imageId}`, { method: 'DELETE' }),
+	listCourses: () => request<Course[]>('/api/admin/courses'),
+	createCourse: (data: unknown) => request<Course>('/api/admin/courses', json('POST', data)),
+	updateCourse: (id: number, data: unknown) =>
+		request<Course>(`/api/admin/courses/${id}`, json('PUT', data)),
+	deleteCourse: (id: number) => request<null>(`/api/admin/courses/${id}`, { method: 'DELETE' }),
+
+	/** .md-файл лекции; файл с тем же именем заменяет лекцию. 422 — список ошибок по строкам. */
+	async uploadLecture(courseId: number, file: File) {
+		const form = new FormData();
+		form.append('file', file);
+		return request<{ created: boolean; lecture: LectureCard }>(
+			`/api/admin/courses/${courseId}/lectures`,
+			{ method: 'POST', body: form }
+		);
+	},
+	setLecturePublished: (id: number, isPublished: boolean) =>
+		request<LectureCard>(`/api/admin/lectures/${id}`, json('PATCH', { is_published: isPublished })),
+	deleteLecture: (id: number) => request<null>(`/api/admin/lectures/${id}`, { method: 'DELETE' }),
 
 	getProfile: () => request<Profile>('/api/profile'),
 	updateProfile: (data: unknown) => request<Profile>('/api/admin/profile', json('PUT', data))

@@ -73,3 +73,90 @@ export interface ProjectDetail extends ProjectCard {
 	sort_order: number;
 	images: ProjectImage[];
 }
+
+// --- Лекции (api/content/lectures_api.py) ---
+
+export type LectureKind = 'transcript' | 'notes';
+export type LectureQuality = 'asr' | 'edited' | 'verified';
+
+export interface License {
+	id: string;
+	name: string;
+	url: string;
+}
+
+export interface LectureCard {
+	id: number;
+	slug: string;
+	title: string;
+	number: number | null;
+	kind: LectureKind;
+	date: string;
+	updated: string;
+	summary: string;
+	duration: string;
+	is_published: boolean;
+}
+
+export interface Course {
+	id: number;
+	slug: string;
+	title: string;
+	description: string;
+	body_md: string;
+	lecturer: string;
+	institution: string;
+	year: string;
+	language: string;
+	license: License;
+	is_published: boolean;
+	sort_order: number;
+	lectures: LectureCard[];
+}
+
+export type CourseBrief = Pick<
+	Course,
+	'slug' | 'title' | 'description' | 'lecturer' | 'institution' | 'language' | 'license'
+>;
+
+export interface Lecture {
+	slug: string;
+	title: string;
+	number: number | null;
+	kind: LectureKind;
+	lecturer: string;
+	author: string;
+	date: string;
+	updated: string;
+	language: string;
+	license: License;
+	quality: LectureQuality;
+	is_published: boolean;
+	source: { url: string; title: string; duration: string } | null;
+	topics: string[];
+	summary: string;
+	body_md: string;
+	course: CourseBrief;
+	prev: { slug: string; title: string } | null;
+	next: { slug: string; title: string } | null;
+}
+
+export interface DatasetRecord {
+	id: string;
+	course: string;
+	title: string;
+	number: number | null;
+	kind: LectureKind;
+	lecturer: string;
+	author: string;
+	institution: string | null;
+	date: string;
+	updated: string;
+	language: string;
+	license: string;
+	quality: LectureQuality;
+	source_url: string | null;
+	topics: string[];
+	summary: string;
+	text: string;
+}

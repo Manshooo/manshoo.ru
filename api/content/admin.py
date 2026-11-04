@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Profile, Project, ProjectImage
+from .models import Course, Lecture, Profile, Project, ProjectImage
 
 
 @admin.register(Profile)
@@ -50,3 +50,16 @@ class ProjectAdmin(admin.ModelAdmin):
         ("Оформление и ссылки", {"fields": ("links", "cover", "uptime_monitor_slug")}),
         ("Публикация", {"fields": ("is_published", "is_featured", "sort_order")}),
     )
+
+
+@admin.register(Course)
+class CourseAdmin(admin.ModelAdmin):
+    list_display = ("title", "slug", "lecturer", "license", "is_published", "sort_order")
+    list_editable = ("is_published", "sort_order")
+
+
+@admin.register(Lecture)
+class LectureAdmin(admin.ModelAdmin):
+    list_display = ("title", "course", "number", "kind", "quality", "date", "is_published")
+    list_filter = ("course", "kind", "quality", "is_published")
+    search_fields = ("title", "slug", "summary")

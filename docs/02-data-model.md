@@ -92,6 +92,11 @@ PUT    /api/admin/profile
 
 Ссылки на загрузки (`cover_url`, `images[].url`, `photo_url`) абсолютные и строятся от `PUBLIC_API_URL` (в проде — `https://api.manshoo.ru`). Хост запроса для этого не годится: SSR спрашивает api по docker-сети, и ссылка вышла бы `http://api:8000/media/…`, которую браузер не откроет. Имя файла получает случайный хвост — заменённая картинка живёт по новому адресу, и кэш nginx (`expires 7d`) не показывает старую.
 
+### Лекции
+
+Модели `Course` и `Lecture`, формат загружаемого .md, эндпоинты `/api/lectures…` и
+`/api/admin/courses…` — в [09-lectures.md](09-lectures.md).
+
 ### Внутреннее (для SSR)
 
 `GET /api/projects/{slug}?preview=1` — с валидной сессией отдаёт и черновик (предпросмотр из админки).

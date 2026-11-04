@@ -18,6 +18,7 @@
 		<nav>
 			<a href="/" class="brand">{data.profile.name}</a>
 			<a href="/#projects">Проекты</a>
+			{#if data.hasLectures}<a href="/lectures">Лекции</a>{/if}
 			<a href="/status">Статус</a>
 		</nav>
 	</header>

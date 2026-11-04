@@ -41,6 +41,7 @@
 	{#if !isLoginPage}
 		<nav>
 			<a href="/admin">Проекты</a>
+			<a href="/admin/lectures">Лекции</a>
 			<a href="/admin/profile">Профиль</a>
 			<a href="/" class="site">Открыть сайт ↗</a>
 			{#if username}

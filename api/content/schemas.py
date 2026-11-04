@@ -124,3 +124,130 @@ class ImageOrderIn(Schema):
     """Галерея целиком, id кадров в нужном порядке."""
 
     ids: list[int]
+
+
+# --- Лекции -----------------------------------------------------------------
+
+
+class LicenseOut(Schema):
+    id: str
+    name: str
+    url: str
+
+
+class LectureLink(Schema):
+    slug: str
+    title: str
+
+
+class LectureCardOut(Schema):
+    id: int
+    slug: str
+    title: str
+    number: int | None
+    kind: str
+    date: date
+    updated: date
+    summary: str
+    duration: str
+    is_published: bool
+
+
+class CourseOut(Schema):
+    id: int
+    slug: str
+    title: str
+    description: str
+    body_md: str
+    lecturer: str
+    institution: str
+    year: str
+    language: str
+    license: LicenseOut
+    is_published: bool
+    sort_order: int
+    lectures: list[LectureCardOut]
+
+
+class CourseBrief(Schema):
+    slug: str
+    title: str
+    description: str
+    lecturer: str
+    institution: str
+    language: str
+    license: LicenseOut
+
+
+class SourceOut(Schema):
+    url: str
+    title: str
+    duration: str
+
+
+class LectureOut(Schema):
+    slug: str
+    title: str
+    number: int | None
+    kind: str
+    lecturer: str
+    author: str
+    date: date
+    updated: date
+    language: str
+    license: LicenseOut
+    quality: str
+    is_published: bool
+    source: SourceOut | None
+    topics: list[str]
+    summary: str
+    body_md: str
+    course: CourseBrief
+    prev: LectureLink | None
+    next: LectureLink | None
+
+
+class DatasetRecord(Schema):
+    """Строка lectures/dataset.jsonl: текст и всё, что нужно для атрибуции.
+    Абсолютный url добавляет фронтенд — домен сайта знает он, а не api."""
+
+    id: str
+    course: str
+    title: str
+    number: int | None
+    kind: str
+    lecturer: str
+    author: str
+    institution: str | None
+    date: date
+    updated: date
+    language: str
+    license: str
+    quality: str
+    source_url: str | None
+    topics: list[str]
+    summary: str
+    text: str
+
+
+class CourseIn(Schema):
+    title: str
+    description: str
+    lecturer: str
+    slug: str = ""
+    body_md: str = ""
+    institution: str = ""
+    year: str = ""
+    language: str = "ru"
+    license: str = "CC-BY-4.0"
+    is_published: bool = False
+    sort_order: int = 0
+
+
+class LecturePatch(Schema):
+    is_published: bool
+
+
+class UploadResult(Schema):
+    created: bool
+    lecture: LectureCardOut

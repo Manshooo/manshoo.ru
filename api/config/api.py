@@ -4,6 +4,8 @@ from ninja import NinjaAPI
 from content.admin_api import router as admin_router
 from content.api import router as content_router
 from content.auth_api import router as auth_router
+from content.lectures_api import admin as lectures_admin_router
+from content.lectures_api import public as lectures_router
 
 # CSRF: django_auth (cookie-аутентификация ninja) сам проверяет X-CSRFToken
 # на небезопасных методах — отдельный флаг у NinjaAPI для этого не нужен.
@@ -13,6 +15,8 @@ api = NinjaAPI(title="manshoo.ru API", version="0.2.0")
 api.add_router("", content_router)
 api.add_router("/auth", auth_router)
 api.add_router("/admin", admin_router)
+api.add_router("/lectures", lectures_router)
+api.add_router("/admin", lectures_admin_router)
 
 
 @api.get("/ping")
